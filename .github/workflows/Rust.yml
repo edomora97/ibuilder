@@ -36,6 +36,28 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+  readme:
+    name: Readme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Rust
+        id: component
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+          override: true
+      - name: Install cargo-readme
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-readme
+      - name: Rebuild readme
+        run: ./tools/updare-readme.sh
+      - name: Check no changes
+        run: |
+          git diff-index --quiet HEAD -- || (echo 'Readme is outdated!' >&2; exit 1)
   test:
     name: Test
     runs-on: ubuntu-latest
