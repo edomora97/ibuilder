@@ -1,6 +1,9 @@
 # ibuilder_derive
 
-See the documentation of the [`ibuilder`](https://crates.io/ibuilder) create for the details,
+[![crates.io](https://img.shields.io/crates/v/ibuilder_derive.svg)](https://crates.io/crates/ibuilder_derive)
+[![Docs](https://docs.rs/ibuilder_derive/badge.svg)](https://docs.rs/ibuilder_derive)
+
+See the documentation of the [`ibuilder`](https://crates.io/crates/ibuilder) create for the details,
 you probably are looking for that.
 
 ### ibuilder derive macro

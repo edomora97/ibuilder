@@ -1,6 +1,8 @@
 # ibuilder
 
-![Rust](https://github.com/edomora97/ibuilder/workflows/Rust/badge.svg?branch=master)
+[![Rust](https://github.com/edomora97/ibuilder/workflows/Rust/badge.svg?branch=master)](https://github.com/edomora97/ibuilder/actions?query=workflow%3ARust)
+[![crates.io](https://img.shields.io/crates/v/ibuilder.svg)](https://crates.io/crates/ibuilder)
+[![Docs](https://docs.rs/ibuilder/badge.svg)](https://docs.rs/ibuilder)
 
 Interactive builders for structs.
 
