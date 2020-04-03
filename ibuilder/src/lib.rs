@@ -167,7 +167,7 @@ impl<T: 'static> Builder<T> {
         Self {
             builder: inner,
             current_fields: vec![],
-            inner_type: Default::default()
+            inner_type: Default::default(),
         }
     }
 
