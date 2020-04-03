@@ -54,7 +54,7 @@ jobs:
           command: install
           args: cargo-readme
       - name: Rebuild readme
-        run: ./tools/updare-readme.sh
+        run: ./tools/update-readme.sh
       - name: Check no changes
         run: |
           git diff-index --quiet HEAD -- || (echo 'Readme is outdated!' >&2; exit 1)
