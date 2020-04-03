@@ -57,7 +57,7 @@ jobs:
         run: ./tools/update-readme.sh
       - name: Check no changes
         run: |
-          git diff-index --quiet HEAD -- || (echo 'Readme is outdated!' >&2; exit 1)
+          git diff-index --quiet HEAD -- || (echo 'Readme is outdated!' >&2; git diff; exit 1)
   test:
     name: Test
     runs-on: ubuntu-latest

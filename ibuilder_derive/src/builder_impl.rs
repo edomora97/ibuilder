@@ -43,11 +43,7 @@ pub fn gen_builder_gen_method(struct_builder_name: &Ident, name: &Ident) -> Toke
         #[automatically_derived]
         impl #name {
             pub fn builder() -> ibuilder::Builder<#name> {
-                ibuilder::Builder {
-                    builder: <#name>::new_builder("".to_string()),
-                    current_fields: vec![],
-                    inner_type: Default::default(),
-                }
+                ibuilder::Builder::from_buildable_value(<#name>::new_builder("".to_string()))
             }
         }
 

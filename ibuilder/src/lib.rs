@@ -122,12 +122,9 @@ pub const BACK_ID: &str = "__back";
 /// will make the `choose` method return `Ok(Some(T))`, signaling the end of the communication.
 #[derive(Debug)]
 pub struct Builder<T> {
-    #[doc(hidden)]
-    pub builder: Box<dyn BuildableValue>,
-    #[doc(hidden)]
-    pub current_fields: Vec<String>,
-    #[doc(hidden)]
-    pub inner_type: PhantomData<T>,
+    builder: Box<dyn BuildableValue>,
+    current_fields: Vec<String>,
+    inner_type: PhantomData<T>,
 }
 
 /// The interactive builder for a base type.
@@ -164,6 +161,16 @@ pub trait NewBuildableValue {
 }
 
 impl<T: 'static> Builder<T> {
+    /// Create a new builder from a `BuildableValue`. Note that the inner type of the
+    /// `BuildableValue` must match `T`, otherwise a panic is very likely.
+    pub fn from_buildable_value(inner: Box<dyn BuildableValue>) -> Builder<T> {
+        Self {
+            builder: inner,
+            current_fields: vec![],
+            inner_type: Default::default()
+        }
+    }
+
     /// Return all the valid options that this builder accepts in the current state.
     pub fn get_options(&self) -> Options {
         // main menu
