@@ -14,7 +14,7 @@ categories = ["config", "data-structures", "parsing"]
 failure = "0.1"
 telegram-bot = "0.7"
 futures = "0.3"
-ibuilder_derive = { path = "../ibuilder_derive", optional = true }
+ibuilder_derive = { path = "../ibuilder_derive", optional = true, version = "0.1.0" }
 
 [features]
 default = ["derive"]

@@ -3,6 +3,12 @@ name = "ibuilder_derive"
 version = "0.1.0"
 authors = ["Edoardo Morassutto <edoardo.morassutto@gmail.com>"]
 edition = "2018"
+licence = "MIT"
+description = "Interactive builder for Rust types"
+homepage = "https://github.com/edomora97/ibuilder"
+repository = "https://github.com/edomora97/ibuilder"
+keywords = ["builder", "derive", "interactive"]
+categories = ["config", "data-structures", "parsing"]
 
 [dependencies]
 syn = "1.0"
