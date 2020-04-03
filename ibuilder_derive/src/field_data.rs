@@ -127,7 +127,7 @@ pub fn get_field_init_data(field: &Field) -> FieldData {
 pub fn field_type_to_builder(field_type: &Path) -> TokenStream2 {
     let segments = &field_type.segments;
     if segments.len() != 1 {
-        panic!("only builtin types are supported: {:?}", field_type);
+        panic!("only builtin types are supported");
     }
     match segments[0].ident.to_string().as_str() {
         "i8" => quote! { ibuilder::builders::I8Builder },
