@@ -11,10 +11,14 @@ keywords = ["builder", "derive", "interactive"]
 categories = ["config", "data-structures", "parsing"]
 readme = "README.md"
 
+[features]
+default = ["derive"]
+derive = ["ibuilder_derive"]
+
 [dependencies]
 failure = "0.1"
 ibuilder_derive = { path = "../ibuilder_derive", optional = true, version = "0.1.0" }
 
-[features]
-default = ["derive"]
-derive = ["ibuilder_derive"]
+[dev-dependencies]
+trybuild = "1.0"
+ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.0" }

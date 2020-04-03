@@ -1,7 +1,3 @@
-//! Test inter-mod builders.
-
-#![allow(dead_code)]
-
 mod mod1 {
     use ibuilder_derive::ibuilder;
 
@@ -20,7 +16,6 @@ mod mod2 {
     }
 }
 
-#[test]
-fn test_mods() {
+fn main() {
     let _builder = mod1::Foo::builder();
 }

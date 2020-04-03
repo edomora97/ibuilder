@@ -20,12 +20,11 @@ pub struct FieldData {
 /// Get the `Ident` from the name of the field.
 pub fn field_type(field: &Field) -> &Path {
     let ty = &field.ty;
-    let path = if let syn::Type::Path(path) = ty {
+    if let syn::Type::Path(path) = ty {
         &path.path
     } else {
-        abort!(ty, "Field type not supported");
-    };
-    path
+        abort!(ty, "unsupported field type");
+    }
 }
 
 /// Return the struct initializer items for all the fields of the structure. It gets expanded to
@@ -60,6 +59,9 @@ pub fn builder_initializer(field: &Field) -> TokenStream2 {
     } else {
         false
     };
+    if !is_auto && default.to_string() != "None" {
+        abort!(field, "default value is supported only on plain types");
+    }
     if is_auto {
         let ty = field_type_to_builder(&field_type);
         quote! { #field_name: Box::new(<#ty>::new(#default, #help.to_string())) }
@@ -97,19 +99,19 @@ pub fn get_field_init_data(field: &Field) -> FieldData {
                             if default.is_none() {
                                 default = Some(lit);
                             } else {
-                                abort!(path, "Duplicated default");
+                                abort!(path, "duplicated default");
                             }
                         } else {
-                            abort!(path, "Unknown attribute");
+                            abort!(path, "unknown attribute");
                         }
                     }
                     // #[ibuilder(stuff)]
                     Meta::Path(path) => {
-                        abort!(path, "Unknown attribute");
+                        abort!(path, "unknown attribute");
                     }
                     // #[ibuilder(stuff(lol))]
                     Meta::List(list) => {
-                        abort!(list, "Unknown attribute");
+                        abort!(list, "unknown attribute");
                     }
                 }
             }

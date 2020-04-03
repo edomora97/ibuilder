@@ -241,7 +241,7 @@ impl<T: 'static> Builder<T> {
 
     /// If the process is done try to finalize the process, even if the user hasn't completed the
     /// the selection yet.
-    pub fn finalize(&mut self) -> Result<T, FinalizeError> {
+    pub fn finalize(&self) -> Result<T, FinalizeError> {
         self.builder
             .get_value_any()
             .ok_or_else(|| FinalizeError::MissingField)

@@ -1,0 +1,14 @@
+error: duplicated default
+ --> $DIR/duplicated_default.rs:5:30
+  |
+5 |     #[ibuilder(default = 42, default = 42)]
+  |                              ^^^^^^^
+
+error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
+  --> $DIR/duplicated_default.rs:10:10
+   |
+4  | struct Foo {
+   | ---------- function or associated item `builder` not found for this
+...
+10 |     Foo::builder();
+   |          ^^^^^^^ function or associated item not found in `Foo`

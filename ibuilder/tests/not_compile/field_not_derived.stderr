@@ -1,0 +1,12 @@
+error[E0599]: no function or associated item named `new_builder` found for struct `Bar` in the current scope
+ --> $DIR/field_not_derived.rs:3:10
+  |
+3 | #[derive(ibuilder)]
+  |          ^^^^^^^^ function or associated item not found in `Bar`
+...
+9 | struct Bar {
+  | ---------- function or associated item `new_builder` not found for this
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `new_builder`, perhaps you need to implement it:
+          candidate #1: `ibuilder::NewBuildableValue`

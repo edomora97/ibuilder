@@ -1,0 +1,15 @@
+error: default value is supported only on plain types
+ --> $DIR/struct_default.rs:5:5
+  |
+5 | /     #[ibuilder(default = 42)]
+6 | |     field: Bar,
+  | |______________^
+
+error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
+  --> $DIR/struct_default.rs:18:10
+   |
+4  | struct Foo {
+   | ---------- function or associated item `builder` not found for this
+...
+18 |     Foo::builder();
+   |          ^^^^^^^ function or associated item not found in `Foo`

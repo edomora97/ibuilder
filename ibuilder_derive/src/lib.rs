@@ -53,7 +53,7 @@ fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
     let data = match &ast.data {
         syn::Data::Struct(data) => match &data.fields {
             syn::Fields::Named(_) => data,
-            _ => abort!(ast, "Only structs with named fields are supported"),
+            _ => abort!(ast, "only structs with named fields are supported"),
         },
         _ => abort!(ast, "only structs can derive ibuilder"),
     };

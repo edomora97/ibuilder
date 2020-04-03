@@ -1,0 +1,8 @@
+error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
+ --> $DIR/not_derived.rs:6:10
+  |
+1 | struct Foo {
+  | ---------- function or associated item `builder` not found for this
+...
+6 |     Foo::builder();
+  |          ^^^^^^^ function or associated item not found in `Foo`
