@@ -1,3 +1,5 @@
+//! ![Rust](https://github.com/edomora97/ibuilder/workflows/Rust/badge.svg?branch=master)
+//!
 //! Interactive builders for structs.
 //!
 //! This crate provides a way to construct structs interactively, starting from an "empty" state

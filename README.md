@@ -1,5 +1,7 @@
 # ibuilder
 
+![Rust](https://github.com/edomora97/ibuilder/workflows/Rust/badge.svg?branch=master)
+
 Interactive builders for structs.
 
 This crate provides a way to construct structs interactively, starting from an "empty" state
@@ -79,3 +81,5 @@ assert_eq!(value.int_field, 42);
 assert_eq!(value.string_field, "hello world!");
 assert_eq!(value.defaulted, 123);
 ```
+
+License: MIT
