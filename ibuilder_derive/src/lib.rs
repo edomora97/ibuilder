@@ -1,4 +1,5 @@
-//! See the documentation of the `ibuilder` create for the details.
+//! See the documentation of the [`ibuilder`](https://crates.io/ibuilder) create for the details,
+//! you probably are looking for that.
 //!
 //! ## ibuilder derive macro
 //!
@@ -18,7 +19,8 @@
 //! Will implement the function `Example::builder()` that returns a `Builder<Example>` for
 //! interactively building instances of the `Example` struct.
 //!
-//! Only structs with named fields can be derived from `ibuilder`.
+//! It will also implement a private struct for keeping the state of the builder and implement the
+//! `NewBuildableValue` trait for `Example`.
 
 use proc_macro::TokenStream;
 
