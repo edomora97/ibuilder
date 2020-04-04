@@ -1,3 +1,4 @@
+#![allow(clippy::cognitive_complexity)]
 use ibuilder::*;
 
 #[derive(Debug, ibuilder, Eq, PartialEq)]
@@ -115,5 +116,5 @@ fn has_choice<S: AsRef<str>>(id: S, options: &Options) -> bool {
             return true;
         }
     }
-    return false;
+    false
 }

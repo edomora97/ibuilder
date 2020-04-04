@@ -52,7 +52,6 @@
 //!     defaulted: i64,
 //! }
 //!
-//! # fn main() {
 //! let mut builder = Example::builder();
 //!
 //! let options = builder.get_options(); // main menu: select the field to edit
@@ -77,7 +76,6 @@
 //! assert_eq!(value.int_field, 42);
 //! assert_eq!(value.string_field, "hello world!");
 //! assert_eq!(value.defaulted, 123);
-//! # }
 //! ```
 
 #[cfg(feature = "derive")]
