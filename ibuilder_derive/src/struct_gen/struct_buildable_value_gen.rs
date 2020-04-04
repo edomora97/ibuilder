@@ -11,7 +11,8 @@ pub fn gen_impl_buildable_value(gen: &StructGenerator) -> TokenStream2 {
     let content = if gen.is_named() {
         StructWithNamedFields::new(gen).gen()
     } else {
-        todo!("StructUnnamed")
+        // TODO: struct unnamed
+        return TokenStream2::new();
     };
     quote! {
         #[automatically_derived]

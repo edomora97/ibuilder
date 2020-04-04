@@ -27,11 +27,14 @@
 
 use proc_macro::TokenStream;
 
-use proc_macro_error::{abort, proc_macro_error};
 use quote::ToTokens;
 
+use proc_macro_error::{abort, proc_macro_error};
+
+use crate::enum_gen::EnumGenerator;
 use crate::struct_gen::StructGenerator;
 
+mod enum_gen;
 mod struct_gen;
 
 /// Derive macro for `ibuilder`.
@@ -49,6 +52,7 @@ pub fn ibuilder_derive(input: TokenStream) -> TokenStream {
 fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
     match &ast.data {
         syn::Data::Struct(_) => StructGenerator::from_struct(ast).to_token_stream().into(),
+        syn::Data::Enum(_) => EnumGenerator::from_enum(ast).to_token_stream().into(),
         _ => abort!(ast, "only structs can derive ibuilder"),
     }
 }

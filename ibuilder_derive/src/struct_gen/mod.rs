@@ -12,6 +12,7 @@ mod struct_buildable_value_gen;
 
 /// Generator for all the builder-related tokens for a `struct`. It will generate a new struct that
 /// implements `BuildableValue`, and will implement some traits for the various types in the game.
+#[derive(Debug)]
 pub struct StructGenerator {
     /// The `Ident` of the original struct.
     ident: Ident,
@@ -22,16 +23,20 @@ pub struct StructGenerator {
 }
 
 /// The information about a field of a struct.
+#[derive(Debug)]
 pub struct StructField {
     /// The `Ident` of the field. It's `None` if the struct has unnamed fields (`struct Foo(i64)`).
-    ident: Option<Ident>,
+    pub ident: Option<Ident>,
     /// The type of the field.
-    ty: Type,
+    pub ty: Type,
+    /// The whole field that generated this instance.
+    pub field: Field,
     /// The metadata associated with the field.
-    metadata: FieldMetadata,
+    pub metadata: FieldMetadata,
 }
 
 /// The metadata of the field, it's taken from the attributes of the `Field`.
+#[derive(Debug)]
 pub struct FieldMetadata {
     /// The default value for this field. Only available if the field type is a builtin type. It is
     /// None if the default value is not specified, otherwise it's
@@ -47,8 +52,10 @@ pub struct FieldMetadata {
 /// original struct. For builtin types it's `ibuilder::builders::XXXBuilder`, for the custom types
 /// it's `Box<dyn BuildableValue>`.
 struct FieldDefList<'s> {
-    /// A reference to the original generator for the struct.
-    gen: &'s StructGenerator,
+    /// A reference to the list of fields of the struct.
+    fields: &'s [StructField],
+    /// Whether the struct has named fields or not.
+    named: bool,
 }
 
 /// Generator for the list of field creation of a struct. It will generate either:
@@ -63,19 +70,29 @@ struct FieldNewList<'s> {
 }
 
 impl StructGenerator {
+    /// Generate the `Ident` to use as the implementation of `BuildableValue` for a struct.
+    pub fn gen_builder_ident(ident: &Ident) -> Ident {
+        format_ident!("__{}_BuildableValueImpl", ident)
+    }
+
     /// Construct a new `StructGenerator` from the AST of a struct. Will fail if the AST is not
     /// relative to a struct.
     pub fn from_struct(ast: &syn::DeriveInput) -> StructGenerator {
         match &ast.data {
-            syn::Data::Struct(data) => match &data.fields {
-                syn::Fields::Named(fields) => StructGenerator {
-                    ident: ast.ident.clone(),
-                    builder_ident: gen_builder_ident(&ast.ident),
-                    fields: fields.named.iter().map(StructField::from).collect(),
+            syn::Data::Struct(data) => StructGenerator {
+                ident: ast.ident.clone(),
+                builder_ident: StructGenerator::gen_builder_ident(&ast.ident),
+                fields: match &data.fields {
+                    syn::Fields::Named(fields) => {
+                        fields.named.iter().map(StructField::from).collect()
+                    }
+                    syn::Fields::Unnamed(fields) => {
+                        fields.unnamed.iter().map(StructField::from).collect()
+                    }
+                    syn::Fields::Unit => vec![],
                 },
-                _ => abort!(ast, "only structs with named fields are supported"),
             },
-            _ => abort!(ast, "only structs can derive ibuilder"),
+            _ => panic!("expecting a struct"),
         }
     }
 
@@ -91,7 +108,10 @@ impl StructGenerator {
 
     /// Make a new `FieldDefList` relative to this struct.
     fn fields_def_list(&self) -> FieldDefList {
-        FieldDefList { gen: &self }
+        FieldDefList {
+            fields: &self.fields,
+            named: self.is_named(),
+        }
     }
 
     /// Make a new `FieldNewList` relative to this struct.
@@ -164,12 +184,12 @@ impl ToTokens for StructGenerator {
 impl<'s> ToTokens for FieldDefList<'s> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         // an empty struct is declared like `struct Foo;`
-        if self.gen.fields.is_empty() {
+        if self.fields.is_empty() {
             tokens.append_all(quote! { ; });
             return;
         }
         let mut inner = TokenStream2::new();
-        for field in &self.gen.fields {
+        for field in self.fields {
             // named field: prepend the field name
             if let Some(ident) = &field.ident {
                 inner.append_all(quote! {#ident: });
@@ -177,10 +197,10 @@ impl<'s> ToTokens for FieldDefList<'s> {
             let ty = field.builder_type();
             inner.append_all(quote! {#ty,})
         }
-        if self.gen.is_named() {
+        if self.named {
             tokens.append_all(quote! { { #inner } });
         } else {
-            tokens.append_all(quote! { ( #inner ) });
+            tokens.append_all(quote! { ( #inner ); });
         }
     }
 }
@@ -213,6 +233,7 @@ impl From<&Field> for StructField {
         let res = StructField {
             ident: field.ident.clone(),
             ty: field.ty.clone(),
+            field: field.clone(),
             metadata: get_field_metadata(&field.attrs),
         };
         if res.metadata.default.is_some() && res.builtin_type().is_none() {
@@ -257,11 +278,6 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
     }
 }
 
-/// Generate the `Ident` to use as the implementation of `BuildableValue` for a struct.
-fn gen_builder_ident(ident: &Ident) -> Ident {
-    format_ident!("__{}_BuildableValueImpl", ident)
-}
-
 /// Generate the struct that implements `BuildableValue` for the struct, and implement the `new()`
 /// function for it.
 fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
@@ -277,8 +293,8 @@ fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
 
         #[automatically_derived]
         impl #builder_ident {
-            fn new() -> Box<dyn ibuilder::BuildableValue> {
-                Box::new(#builder_ident #fields_new)
+            fn new() -> #builder_ident {
+                #builder_ident #fields_new
             }
         }
     }
