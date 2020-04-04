@@ -261,7 +261,7 @@ impl<T: 'static> Builder<T> {
 }
 
 /// The options that the user has for the next choice in the `Builder`.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Options {
     /// A textual message with the query to show to the user.
     pub query: String,
@@ -272,7 +272,7 @@ pub struct Options {
 }
 
 /// A single choice that the user can select.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Choice {
     /// Identifier of the choice, may not be shown to the user. Its value has to be used as the
     /// value in `Input::Choice`.
@@ -285,7 +285,7 @@ pub struct Choice {
 }
 
 /// An input of the user to the `Builder`.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Input {
     /// The user inserted some raw textual content. Can be used only if the `text_input` field of
     /// the last `Options` was set to `true`.
@@ -296,7 +296,7 @@ pub enum Input {
 }
 
 /// The `Input` provided to `Builder::choose` was is invalid.
-#[derive(Debug, Fail)]
+#[derive(Debug, Fail, Eq, PartialEq)]
 pub enum ChooseError {
     /// The textual input is not valid.
     #[fail(display = "Invalid input: {}", error)]
@@ -310,7 +310,7 @@ pub enum ChooseError {
 }
 
 /// The finalization of the result failed.
-#[derive(Debug, Fail)]
+#[derive(Debug, Fail, Eq, PartialEq)]
 pub enum FinalizeError {
     /// One or more fields were still missing.
     #[fail(display = "There is at least a missing field")]

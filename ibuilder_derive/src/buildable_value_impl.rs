@@ -113,6 +113,7 @@ pub fn gen_impl_buildable_value(
 /// Otherwise, if a field is selected, the action is forwarded to that field.
 fn gen_fn_apply(data: &DataStruct) -> TokenStream2 {
     let mut field_apply = Vec::new();
+    let mut field_names = Vec::new();
     for field in data.fields.iter() {
         let field_name = field.ident.as_ref().unwrap();
         let field_name_lit =
@@ -120,12 +121,16 @@ fn gen_fn_apply(data: &DataStruct) -> TokenStream2 {
         field_apply.push(quote! {
             #field_name_lit => self.#field_name.apply(data, rest)?
         });
+        field_names.push(field_name_lit);
     }
 
     quote! {
         fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
             if current_fields.is_empty() {
-                // the subfield field got selected...
+                match data {
+                    #(#field_names)|* => {},
+                    _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
+                }
             } else {
                 let field = &current_fields[0];
                 let rest = &current_fields[1..];
