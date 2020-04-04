@@ -1,14 +1,7 @@
-error: unsupported field type
- --> $DIR/invalid_field_type.rs:6:10
+error[E0277]: the trait bound `&'static str: ibuilder::NewBuildableValue` is not satisfied
+ --> $DIR/invalid_field_type.rs:3:10
   |
-6 |     ups: &'static str,
-  |          ^^^^^^^^^^^^
-
-error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
-  --> $DIR/invalid_field_type.rs:10:10
-   |
-4  | struct Foo {
-   | ---------- function or associated item `builder` not found for this
-...
-10 |     Foo::builder();
-   |          ^^^^^^^ function or associated item not found in `Foo`
+3 | #[derive(ibuilder)]
+  |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `&'static str`
+  |
+  = note: required by `ibuilder::NewBuildableValue::new_builder`

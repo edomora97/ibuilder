@@ -7,17 +7,17 @@ pub struct Foo {
 
 #[derive(ibuilder)]
 pub struct Bar {
-    baz: Baz
+    baz: Baz,
 }
 
 #[derive(ibuilder)]
 pub struct Baz {
-    bim: Bim
+    bim: Bim,
 }
 
 #[derive(ibuilder)]
 pub struct Bim {
-    val: String
+    val: String,
 }
 
 fn main() {

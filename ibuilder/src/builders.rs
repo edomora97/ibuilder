@@ -1,7 +1,6 @@
 //! Module with the implementors of `BuildableValue` for the various standard types.
 
 use std::any::Any;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::str::FromStr;
 
@@ -10,10 +9,6 @@ use crate::{BuildableValue, Choice, ChooseError, NewBuildableValue, Options};
 
 macro_rules! type_builder_boilerplate {
     () => {
-        fn get_help(&self) -> &str {
-            &self.help
-        }
-
         fn get_subfields(&self, _: &[String]) -> Vec<String> {
             vec![]
         }
@@ -36,18 +31,15 @@ macro_rules! type_builder_struct {
         #[doc = $docstring]
         #[derive(Debug)]
         pub struct $name {
-            /// The help message of this value.
-            pub help: String,
             /// The current value.
             pub value: Option<$base>,
         }
 
         impl $name {
             /// Make a new instance of the builder.
-            pub fn new(default: Option<$base>, help: String) -> Self {
+            pub fn new(default: Option<$base>) -> Self {
                 Self {
                     value: default.clone(),
-                    help,
                 }
             }
         }
@@ -107,8 +99,8 @@ macro_rules! type_builder {
         }
 
         impl NewBuildableValue for $base {
-            fn new_builder(help: String) -> Box<dyn BuildableValue> {
-                Box::new($name::new(None, help))
+            fn new_builder() -> Box<dyn BuildableValue> {
+                Box::new($name::new(None))
             }
         }
     };
@@ -122,8 +114,8 @@ type_builder!(u8, U8Builder, "Type an integer");
 type_builder!(u16, U16Builder, "Type an integer");
 type_builder!(u32, U32Builder, "Type an integer");
 type_builder!(u64, U64Builder, "Type an integer");
-type_builder!(isize, ISizeBuilder, "Type an integer");
-type_builder!(usize, USizeBuilder, "Type an integer");
+type_builder!(isize, IsizeBuilder, "Type an integer");
+type_builder!(usize, UsizeBuilder, "Type an integer");
 type_builder!(f32, F32Builder, "Type an integer");
 type_builder!(f64, F64Builder, "Type an integer");
 type_builder!(String, StringBuilder, "Type a string");
@@ -212,23 +204,31 @@ impl BuildableValue for BoolBuilder {
 ///
 /// When `__new` is applied a new item is pushed at the back of the `Vec` and when `__new` is to
 /// be considered as an index it refers to the last element of the `Vec`.
-#[derive(Debug)]
 pub struct VecBuilder<T>
 where
-    T: Debug + NewBuildableValue + 'static,
+    T: NewBuildableValue + 'static,
 {
-    help: String,
     items: Vec<Box<dyn BuildableValue>>,
     inner_type: PhantomData<T>,
 }
 
+impl<T> std::fmt::Debug for VecBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VecBuilder")
+            .field("items", &self.items)
+            .finish()
+    }
+}
+
 impl<T> NewBuildableValue for Vec<T>
 where
-    T: Debug + NewBuildableValue + 'static,
+    T: NewBuildableValue + 'static,
 {
-    fn new_builder(help: String) -> Box<dyn BuildableValue> {
+    fn new_builder() -> Box<dyn BuildableValue> {
         Box::new(VecBuilder::<T> {
-            help,
             items: Vec::new(),
             inner_type: Default::default(),
         })
@@ -237,18 +237,13 @@ where
 
 impl<T> BuildableValue for VecBuilder<T>
 where
-    T: Debug + NewBuildableValue + 'static,
+    T: NewBuildableValue + 'static,
 {
-    fn get_help(&self) -> &str {
-        &self.help
-    }
-
     fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
         // vec main menu
         if current_fields.is_empty() {
             if data == "__new" {
-                self.items
-                    .push(T::new_builder(format!("Item {}", self.items.len())));
+                self.items.push(T::new_builder());
             }
         // remove item or apply to element
         } else {

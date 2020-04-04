@@ -1,4 +1,4 @@
-use ibuilder::{Builder, Input, Options, ChooseError, FinalizeError, nodes::Node};
+use ibuilder::{nodes::Node, Builder, ChooseError, FinalizeError, Input, Options};
 use ibuilder_derive::ibuilder;
 
 #[derive(ibuilder)]

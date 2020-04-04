@@ -28,16 +28,11 @@
 use proc_macro::TokenStream;
 
 use proc_macro_error::{abort, proc_macro_error};
-use quote::{format_ident, quote};
+use quote::ToTokens;
 
-use crate::buildable_value_impl::{
-    gen_impl_buildable_value, gen_impl_struct_buildable_value, gen_struct_buildable_value,
-};
-use crate::builder_impl::gen_builder_gen_method;
+use crate::struct_gen::StructGenerator;
 
-mod buildable_value_impl;
-mod builder_impl;
-mod field_data;
+mod struct_gen;
 
 /// Derive macro for `ibuilder`.
 #[proc_macro_error]
@@ -52,31 +47,8 @@ pub fn ibuilder_derive(input: TokenStream) -> TokenStream {
 /// - `impl BuildableValue for __Name_BuildableValueImpl`
 /// - `impl NewBuildableValue for Name`
 fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
-    // allow the derivation only on structs with named fields
-    let data = match &ast.data {
-        syn::Data::Struct(data) => match &data.fields {
-            syn::Fields::Named(_) => data,
-            _ => abort!(ast, "only structs with named fields are supported"),
-        },
+    match &ast.data {
+        syn::Data::Struct(_) => StructGenerator::from_struct(ast).to_token_stream().into(),
         _ => abort!(ast, "only structs can derive ibuilder"),
-    };
-
-    // the original name of the derived struct
-    let name = &ast.ident;
-    // the name of the newly created struct that implements `BuildableValue`.
-    let buildable_value_name = format_ident!("__{}_BuildableValueImpl", name);
-
-    let impl_builder_method = gen_builder_gen_method(&buildable_value_name, &name);
-    let struct_buildable_value = gen_struct_buildable_value(data, &buildable_value_name);
-    let impl_struct_buildable_value = gen_impl_struct_buildable_value(data, &buildable_value_name);
-    let impl_buildable_value = gen_impl_buildable_value(data, &name, &buildable_value_name);
-
-    let gen = quote! {
-        use ibuilder::NewBuildableValue as _;
-        #impl_builder_method
-        #struct_buildable_value
-        #impl_struct_buildable_value
-        #impl_buildable_value
-    };
-    gen.into()
+    }
 }

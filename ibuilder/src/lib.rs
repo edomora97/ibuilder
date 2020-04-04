@@ -30,7 +30,6 @@
 //!
 //! ## Supported features
 //! - Deriving any struct with named fields (not `struct Foo(i64)`)
-//! - Help messages for the fields from the _first line_ of the rustdoc
 //! - Default values for the fields
 //! - Nested structures (i.e. custom types)
 //! - Supported field types: all numeric types from rust, `bool`, `String`, `char` and `Vec<T>`
@@ -49,7 +48,6 @@
 //!
 //! #[derive(ibuilder)]
 //! struct Example {
-//!     /// This message is used as the help message of the field.
 //!     int_field: i64,
 //!     string_field: String,
 //!     #[ibuilder(default = 123)]
@@ -131,9 +129,6 @@ pub struct Builder<T> {
 
 /// The interactive builder for a base type.
 pub trait BuildableValue: std::fmt::Debug {
-    /// The help message for this value. Will be shown in the interactive menus.
-    fn get_help(&self) -> &str;
-
     /// Try to change the inner value using the provided string.
     fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError>;
 
@@ -159,7 +154,7 @@ pub trait BuildableValue: std::fmt::Debug {
 /// `get_value_any` method.
 pub trait NewBuildableValue {
     /// Construct a new `BuildableValue`.
-    fn new_builder(help: String) -> Box<dyn BuildableValue>;
+    fn new_builder() -> Box<dyn BuildableValue>;
 }
 
 impl<T: 'static> Builder<T> {
@@ -318,10 +313,6 @@ pub enum FinalizeError {
 }
 
 impl<T: BuildableValue + ?Sized> BuildableValue for Box<T> {
-    fn get_help(&self) -> &str {
-        self.as_ref().get_help()
-    }
-
     fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
         self.as_mut().apply(data, current_fields)
     }
