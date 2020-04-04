@@ -388,3 +388,62 @@ where
         Some(Box::new(results))
     }
 }
+
+/// Builder for the type `Box<T>`.
+pub struct BoxBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    value: Box<dyn BuildableValue>,
+    inner_type: PhantomData<T>,
+}
+
+impl<T> std::fmt::Debug for BoxBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BoxBuilder")
+            .field("value", &self.value)
+            .finish()
+    }
+}
+
+impl<T> NewBuildableValue for Box<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn new_buildable_value() -> Box<dyn BuildableValue> {
+        Box::new(BoxBuilder::<T> {
+            value: T::new_buildable_value(),
+            inner_type: Default::default(),
+        })
+    }
+}
+
+impl<T> BuildableValue for BoxBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+        self.value.apply(data, current_fields)
+    }
+
+    fn get_options(&self, current_fields: &[String]) -> Options {
+        self.value.get_options(current_fields)
+    }
+
+    fn get_subfields(&self, current_fields: &[String]) -> Vec<String> {
+        self.value.get_subfields(current_fields)
+    }
+
+    fn to_node(&self) -> Node {
+        self.value.to_node()
+    }
+
+    fn get_value_any(&self) -> Option<Box<dyn Any>> {
+        Some(Box::new(
+            *self.value.get_value_any()?.downcast::<T>().unwrap(),
+        ))
+    }
+}

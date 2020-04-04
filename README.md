@@ -31,15 +31,16 @@ of this crate, keeping all the type-safeness.
 The derive API is inspired by the great [`structopt`](https://docs.rs/structopt) crate.
 
 ### Supported features
-- Deriving any struct with named fields (not `struct Foo(i64)`)
+- Deriving any struct with named fields (or with one unnamed field like `struct Foo(i64)`)
 - Default values for the fields
 - Nested structures (i.e. custom types)
-- Supported field types: all numeric types from rust, `bool`, `String`, `char` and `Vec<T>`
+- Enums (also with variants with field, but only one if unnamed)
+- Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and
+  `Vec<T>`
 - Any field type that implementes the `NewBuildableValue` trait.
 
 #### Not yet supported, but planned
 - Hidden fields (that takes the value only from the default)
-- Enums
 - Field types: `Option<T>`
 
 ### Example of usage

@@ -3,7 +3,7 @@ use ibuilder::*;
 #[derive(ibuilder)]
 pub struct Foo {
     bar: Bar,
-    bim: Bim,
+    bim: Box<Bim>,
 }
 
 #[derive(ibuilder)]
