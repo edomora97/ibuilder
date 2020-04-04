@@ -1,4 +1,4 @@
-use ibuilder_derive::ibuilder;
+use ibuilder::*;
 
 #[derive(ibuilder)]
 pub struct NestedFoo {

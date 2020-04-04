@@ -99,7 +99,7 @@ macro_rules! type_builder {
         }
 
         impl NewBuildableValue for $base {
-            fn new_builder() -> Box<dyn BuildableValue> {
+            fn new_buildable_value() -> Box<dyn BuildableValue> {
                 Box::new($name::new(None))
             }
         }
@@ -227,7 +227,7 @@ impl<T> NewBuildableValue for Vec<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn new_builder() -> Box<dyn BuildableValue> {
+    fn new_buildable_value() -> Box<dyn BuildableValue> {
         Box::new(VecBuilder::<T> {
             items: Vec::new(),
             inner_type: Default::default(),
@@ -243,7 +243,7 @@ where
         // vec main menu
         if current_fields.is_empty() {
             if data == "__new" {
-                self.items.push(T::new_builder());
+                self.items.push(T::new_buildable_value());
             }
         // remove item or apply to element
         } else {

@@ -1,4 +1,4 @@
-use ibuilder::ibuilder;
+use ibuilder::*;
 
 #[derive(ibuilder)]
 struct Foo(i64);

@@ -12,10 +12,10 @@
 //! and rust type-safeness.
 //!
 //! The API of this crate is very simple, you start with a struct derived from `ibuilder` and call
-//! the auto-generated function `builder()`. This will construct a new custom-built `Builder` to
-//! use for the communication. The `Builder` provides two main functions: `get_options()` for
-//! getting the current state of the builder and the list of possible options the user can choose,
-//! and `choose(input)` that validates and inserts the choice of the user.
+//! the auto-generated function `builder()` from the `Buildable` trait. This will construct a new
+//! custom-built `Builder` to use for the communication. The `Builder` provides two main functions:
+//! `get_options()` for getting the current state of the builder and the list of possible options
+//! the user can choose, and `choose(input)` that validates and inserts the choice of the user.
 //!
 //! ## Rationale
 //! When building an interactive application (e.g. a Telegram Bot, a Console application) which
@@ -42,9 +42,7 @@
 //!
 //! ## Example of usage
 //! ```
-//! extern crate ibuilder_derive;
-//! use ibuilder_derive::ibuilder;
-//! use ibuilder::{FINALIZE_ID, Input};
+//! use ibuilder::*;
 //!
 //! #[derive(ibuilder)]
 //! struct Example {
@@ -125,6 +123,22 @@ pub struct Builder<T> {
     builder: Box<dyn BuildableValue>,
     current_fields: Vec<String>,
     inner_type: PhantomData<T>,
+}
+
+/// A type that supports being built using a `Builder`. Deriving `ibuilder` an auto-generated
+/// implementation for this trait is provided.
+pub trait Buildable<T> {
+    /// Create a new `Builder<T>` for the current type.
+    fn builder() -> Builder<T>;
+}
+
+impl<T> Buildable<T> for T
+where
+    T: NewBuildableValue + 'static,
+{
+    fn builder() -> Builder<T> {
+        Builder::<T>::from_buildable_value(T::new_buildable_value())
+    }
 }
 
 /// The interactive builder for a base type.

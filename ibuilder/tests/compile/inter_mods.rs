@@ -1,5 +1,5 @@
 mod mod1 {
-    use ibuilder_derive::ibuilder;
+    use ibuilder::*;
 
     #[derive(ibuilder)]
     pub struct Foo {
@@ -8,7 +8,7 @@ mod mod1 {
 }
 
 mod mod2 {
-    use ibuilder_derive::ibuilder;
+    use ibuilder::*;
 
     #[derive(ibuilder)]
     pub struct Bar {
@@ -17,5 +17,6 @@ mod mod2 {
 }
 
 fn main() {
+    use ibuilder::Buildable;
     let _builder = mod1::Foo::builder();
 }

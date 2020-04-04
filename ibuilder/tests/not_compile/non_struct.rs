@@ -1,4 +1,4 @@
-use ibuilder::ibuilder;
+use ibuilder::*;
 
 #[derive(ibuilder)]
 enum Foo {

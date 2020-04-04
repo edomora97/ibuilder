@@ -155,7 +155,6 @@ impl StructField {
 
 impl ToTokens for StructGenerator {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        tokens.append_all(gen_impl_builder_method(&self));
         tokens.append_all(gen_struct_builder(&self));
         tokens.append_all(gen_impl_new_buildable_value(&self));
         tokens.append_all(gen_impl_buildable_value(&self));
@@ -261,20 +260,6 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
 /// Generate the `Ident` to use as the implementation of `BuildableValue` for a struct.
 fn gen_builder_ident(ident: &Ident) -> Ident {
     format_ident!("__{}_BuildableValueImpl", ident)
-}
-
-/// Generate the `builder()` method for the base type.
-///
-/// TODO: move this to a trait
-fn gen_impl_builder_method(gen: &StructGenerator) -> TokenStream2 {
-    let ident = &gen.ident;
-    quote! {
-        impl #ident {
-            pub fn builder() -> ibuilder::Builder<#ident> {
-                ibuilder::Builder::from_buildable_value(<#ident as ibuilder::NewBuildableValue>::new_buildable_value())
-            }
-        }
-    }
 }
 
 /// Generate the struct that implements `BuildableValue` for the struct, and implement the `new()`

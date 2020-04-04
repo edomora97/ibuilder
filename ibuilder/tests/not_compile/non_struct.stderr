@@ -14,3 +14,11 @@ error[E0599]: no variant or associated item named `builder` found for enum `Foo`
 ...
 9 |     Foo::builder();
   |          ^^^^^^^ variant or associated item not found in `Foo`
+  |
+  = note: the method `builder` exists but the following trait bounds were not satisfied:
+          `&Foo : ibuilder::Buildable<_>`
+          `&mut Foo : ibuilder::Buildable<_>`
+          `Foo : ibuilder::Buildable<_>`
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `builder`, perhaps you need to implement it:
+          candidate #1: `ibuilder::Buildable`

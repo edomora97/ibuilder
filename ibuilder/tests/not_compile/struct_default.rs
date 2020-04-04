@@ -1,4 +1,4 @@
-use ibuilder::ibuilder;
+use ibuilder::*;
 
 #[derive(ibuilder)]
 struct Foo {
@@ -11,8 +11,6 @@ struct Bar {
     #[ibuilder(default = 42)]
     field: i32,
 }
-
-
 
 fn main() {
     Foo::builder();

@@ -12,3 +12,11 @@ error[E0599]: no function or associated item named `builder` found for struct `F
 ...
 10 |     Foo::builder();
    |          ^^^^^^^ function or associated item not found in `Foo`
+   |
+   = note: the method `builder` exists but the following trait bounds were not satisfied:
+           `&Foo : ibuilder::Buildable<_>`
+           `&mut Foo : ibuilder::Buildable<_>`
+           `Foo : ibuilder::Buildable<_>`
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `builder`, perhaps you need to implement it:
+           candidate #1: `ibuilder::Buildable`
