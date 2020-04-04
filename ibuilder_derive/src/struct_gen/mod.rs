@@ -1,7 +1,8 @@
 use proc_macro_error::{abort, ResultExt};
-use syn::export::TokenStream2;
+use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
-use syn::{Attribute, Field, Ident, Meta, MetaNameValue, Token, Type};
+use syn::spanned::Spanned;
+use syn::{Attribute, Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
@@ -9,6 +10,7 @@ use crate::struct_gen::struct_buildable_value_gen::gen_impl_buildable_value;
 
 mod named_fields;
 mod struct_buildable_value_gen;
+mod unnamed_fields;
 
 /// Generator for all the builder-related tokens for a `struct`. It will generate a new struct that
 /// implements `BuildableValue`, and will implement some traits for the various types in the game.
@@ -20,6 +22,10 @@ pub struct StructGenerator {
     builder_ident: Ident,
     /// The list of fields in the original struct.
     fields: Vec<StructField>,
+    /// The span of this structure.
+    span: Span,
+    /// Whether the fields of this struct are named.
+    named_fields: bool,
 }
 
 /// The information about a field of a struct.
@@ -79,26 +85,34 @@ impl StructGenerator {
     /// relative to a struct.
     pub fn from_struct(ast: &syn::DeriveInput) -> StructGenerator {
         match &ast.data {
-            syn::Data::Struct(data) => StructGenerator {
-                ident: ast.ident.clone(),
-                builder_ident: StructGenerator::gen_builder_ident(&ast.ident),
-                fields: match &data.fields {
-                    syn::Fields::Named(fields) => {
-                        fields.named.iter().map(StructField::from).collect()
-                    }
-                    syn::Fields::Unnamed(fields) => {
-                        fields.unnamed.iter().map(StructField::from).collect()
-                    }
-                    syn::Fields::Unit => vec![],
-                },
-            },
+            syn::Data::Struct(data) => {
+                let named_fields = match data.fields {
+                    Fields::Named(_) => true,
+                    _ => false,
+                };
+                StructGenerator {
+                    ident: ast.ident.clone(),
+                    builder_ident: StructGenerator::gen_builder_ident(&ast.ident),
+                    fields: match &data.fields {
+                        syn::Fields::Named(fields) => {
+                            fields.named.iter().map(StructField::from).collect()
+                        }
+                        syn::Fields::Unnamed(fields) => {
+                            fields.unnamed.iter().map(StructField::from).collect()
+                        }
+                        syn::Fields::Unit => vec![],
+                    },
+                    span: ast.span(),
+                    named_fields,
+                }
+            }
             _ => panic!("expecting a struct"),
         }
     }
 
     /// Whether the fields of the original struct are named or unnamed (`struct Foo(i64)`).
     fn is_named(&self) -> bool {
-        self.fields.iter().all(|f| f.ident.is_some())
+        self.named_fields
     }
 
     /// The list of the `Ident` of the named fields in the original struct.

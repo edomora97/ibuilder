@@ -1,8 +1,11 @@
-use crate::enum_gen::enum_buildable_value_gen::gen_impl_buildable_value;
-use crate::struct_gen::{StructField, StructGenerator};
-use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+use proc_macro_error::abort;
 use syn::export::TokenStream2;
 use syn::{Fields, Ident, Variant};
+
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+
+use crate::enum_gen::enum_buildable_value_gen::gen_impl_buildable_value;
+use crate::struct_gen::{StructField, StructGenerator};
 
 mod enum_buildable_value_gen;
 
@@ -77,6 +80,12 @@ impl EnumVariant {
             VariantKind::Empty => return TokenStream2::new(),
             VariantKind::Unnamed(fields) => {
                 let fields: Vec<_> = fields.iter().map(|f| &f.field).collect();
+                if fields.len() != 1 {
+                    abort!(
+                        self.ident,
+                        "variants with unnamed fields are supported only with one field"
+                    );
+                }
                 quote! { (#(#fields,)*); }
             }
             VariantKind::Named(fields) => {
@@ -86,7 +95,7 @@ impl EnumVariant {
         };
         quote! {
             #[allow(non_camel_case_types)]
-            #[derive(Debug, ibuilder)]
+            #[derive(ibuilder)]
             struct #ident #fields_def
         }
     }

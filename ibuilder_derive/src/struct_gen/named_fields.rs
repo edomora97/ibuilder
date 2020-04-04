@@ -1,3 +1,4 @@
+use proc_macro_error::abort;
 use syn::export::TokenStream2;
 use syn::Ident;
 
@@ -16,6 +17,9 @@ pub struct StructWithNamedFields<'s> {
 impl<'s> StructWithNamedFields<'s> {
     /// Make a new `StructWithNamedFields` from a `StructGenerator`.
     pub fn new(gen: &'s StructGenerator) -> Self {
+        if gen.fields.is_empty() {
+            abort!(gen.span, "the struct must have at least one field");
+        }
         Self {
             fields: gen.field_names(),
             gen,

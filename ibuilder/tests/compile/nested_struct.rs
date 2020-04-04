@@ -21,5 +21,5 @@ pub struct Bim {
 }
 
 fn main() {
-    let _builder = Foo::builder();
+    Foo::builder();
 }

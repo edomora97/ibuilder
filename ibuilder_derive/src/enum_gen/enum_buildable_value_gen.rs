@@ -252,7 +252,7 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
                     }
                 },
                 VariantKind::Unnamed(_) => quote! {
-                    Some(#builder::#ident(inner)) => Node::Composite(
+                    Some(#builder::#ident(inner)) => ibuilder::nodes::Node::Composite(
                         stringify!(#ident).to_string(),
                         vec![ibuilder::nodes::FieldKind::Unnamed(inner.to_node())],
                     )
@@ -297,7 +297,7 @@ fn gen_fn_get_value_any(gen: &EnumGenerator) -> TokenStream2 {
                     }
                 }
                 VariantKind::Unnamed(fields) => {
-                    let fields = 0..fields.len();
+                    let fields = (0..fields.len()).map(syn::Index::from);
                     let field_builder = gen_variants_builder_variant_ident(&gen.ident, ident);
                     quote! {
                         #builder::#ident(inner) => {
