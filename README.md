@@ -14,10 +14,10 @@ The builder provides the user with interactive menu-like interfaces, keeping the
 and rust type-safeness.
 
 The API of this crate is very simple, you start with a struct derived from `ibuilder` and call
-the auto-generated function `builder()`. This will construct a new custom-built `Builder` to
-use for the communication. The `Builder` provides two main functions: `get_options()` for
-getting the current state of the builder and the list of possible options the user can choose,
-and `choose(input)` that validates and inserts the choice of the user.
+the auto-generated function `builder()` from the `Buildable` trait. This will construct a new
+custom-built `Builder` to use for the communication. The `Builder` provides two main functions:
+`get_options()` for getting the current state of the builder and the list of possible options
+the user can choose, and `choose(input)` that validates and inserts the choice of the user.
 
 ### Rationale
 When building an interactive application (e.g. a Telegram Bot, a Console application) which
@@ -32,7 +32,6 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 
 ### Supported features
 - Deriving any struct with named fields (not `struct Foo(i64)`)
-- Help messages for the fields from the _first line_ of the rustdoc
 - Default values for the fields
 - Nested structures (i.e. custom types)
 - Supported field types: all numeric types from rust, `bool`, `String`, `char` and `Vec<T>`
@@ -45,13 +44,10 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 
 ### Example of usage
 ```rust
-extern crate ibuilder_derive;
-use ibuilder_derive::ibuilder;
-use ibuilder::{FINALIZE_ID, Input};
+use ibuilder::*;
 
 #[derive(ibuilder)]
 struct Example {
-    /// This message is used as the help message of the field.
     int_field: i64,
     string_field: String,
     #[ibuilder(default = 123)]
