@@ -9,8 +9,8 @@ pub struct Foo {
 fn main() {
     let mut builder: Builder<Foo> = Foo::builder();
     let _: Options = builder.get_options();
-    let _: Result<Option<Foo>, ChooseError> = builder.choose(Input::Text("foo".to_string()));
-    let _: Result<Option<Foo>, ChooseError> = builder.choose(Input::Choice("foo".to_string()));
+    let _: Result<Option<Foo>, ChooseError> = builder.choose(Input::text("foo"));
+    let _: Result<Option<Foo>, ChooseError> = builder.choose(Input::choice("foo"));
     let _: Result<Foo, FinalizeError> = builder.finalize();
     let _: bool = builder.is_done();
     let _: Node = builder.to_node();

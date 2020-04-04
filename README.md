@@ -57,18 +57,18 @@ struct Example {
 let mut builder = Example::builder();
 
 let options = builder.get_options(); // main menu: select the field to edit
-builder.choose(Input::Choice("int_field".into())).unwrap(); // select the field
+builder.choose(Input::choice("int_field")).unwrap(); // select the field
 
 let options = builder.get_options(); // int_field menu
 assert!(options.text_input); // for inserting the integer value
-builder.choose(Input::Text("42".into())).unwrap(); // insert the value
+builder.choose(Input::text("42")).unwrap(); // insert the value
 
 let options = builder.get_options(); // back to the main menu
-builder.choose(Input::Choice("string_field".into())).unwrap(); // select the second field
+builder.choose(Input::choice("string_field")).unwrap(); // select the second field
 
 let options = builder.get_options(); // string_field menu
 assert!(options.text_input); // for inserting the string value
-builder.choose(Input::Text("hello world!".into())).unwrap(); // insert the value
+builder.choose(Input::text("hello world!")).unwrap(); // insert the value
 
 assert!(builder.is_done());
 let options = builder.get_options(); // main menu again, but the "Done" option is available

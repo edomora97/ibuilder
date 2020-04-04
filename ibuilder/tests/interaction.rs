@@ -30,23 +30,23 @@ fn test_interaction() {
     assert!(!has_choice(BACK_ID, &options));
     assert!(!has_choice(FINALIZE_ID, &options));
 
-    let res = builder.choose(Input::Choice("nope".into()));
+    let res = builder.choose(Input::choice("nope"));
     assert_eq!(res, Err(ChooseError::UnexpectedChoice));
-    let res = builder.choose(Input::Choice(BACK_ID.into()));
+    let res = builder.choose(Input::choice(BACK_ID));
     assert_eq!(res, Err(ChooseError::UnexpectedChoice));
-    let res = builder.choose(Input::Choice("integer".into()));
+    let res = builder.choose(Input::choice("integer"));
     assert_eq!(res, Ok(None));
 
     let options = builder.get_options();
     assert!(options.text_input);
     assert!(has_choice(BACK_ID, &options));
 
-    let res = builder.choose(Input::Text("nope".into()));
+    let res = builder.choose(Input::text("nope"));
     if let Err(ChooseError::InvalidText { .. }) = res {
     } else {
         panic!("expecting ChooseError::InvalidText");
     }
-    let res = builder.choose(Input::Text("123".into()));
+    let res = builder.choose(Input::text("123"));
     assert_eq!(res, Ok(None));
 
     let options = builder.get_options();
@@ -57,7 +57,7 @@ fn test_interaction() {
     assert!(!has_choice(BACK_ID, &options));
     assert!(!has_choice(FINALIZE_ID, &options));
 
-    let res = builder.choose(Input::Choice("inner".into()));
+    let res = builder.choose(Input::choice("inner"));
     assert_eq!(res, Ok(None));
 
     let options = builder.get_options();
@@ -67,7 +67,7 @@ fn test_interaction() {
     assert!(has_choice(BACK_ID, &options));
     assert!(!has_choice(FINALIZE_ID, &options));
 
-    let res = builder.choose(Input::Choice("string".into()));
+    let res = builder.choose(Input::choice("string"));
     assert_eq!(res, Ok(None));
 
     let options = builder.get_options();
@@ -75,7 +75,7 @@ fn test_interaction() {
     assert!(has_choice(BACK_ID, &options));
     assert!(!has_choice(FINALIZE_ID, &options));
 
-    let res = builder.choose(Input::Text("lallabalalla".into()));
+    let res = builder.choose(Input::text("lallabalalla"));
     assert_eq!(res, Ok(None));
 
     let options = builder.get_options();
