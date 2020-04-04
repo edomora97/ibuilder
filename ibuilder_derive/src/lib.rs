@@ -19,11 +19,12 @@
 //! }
 //! ```
 //!
-//! Will implement the function `Example::builder()` that returns a `Builder<Example>` for
-//! interactively building instances of the `Example` struct.
+//! Will implement the trait `ibuilder::Buildable` for `Example`, prodiding the `builder()` method
+//! for getting a `ibuilder::Builder`.
 //!
 //! It will also implement a private struct for keeping the state of the builder and implement the
-//! `NewBuildableValue` trait for `Example`.
+//! `NewBuildableValue` trait for `Example`, allowing it to be inside a fields of other derived
+//! types.
 
 use proc_macro::TokenStream;
 
