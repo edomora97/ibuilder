@@ -123,7 +123,7 @@ impl StructField {
             quote! { <#builtin>::new(#default) }
         } else {
             let ty = &self.ty;
-            quote! { <#ty as ibuilder::NewBuildableValue>::new_builder() }
+            quote! { <#ty as ibuilder::NewBuildableValue>::new_buildable_value() }
         }
     }
 
@@ -271,7 +271,7 @@ fn gen_impl_builder_method(gen: &StructGenerator) -> TokenStream2 {
     quote! {
         impl #ident {
             pub fn builder() -> ibuilder::Builder<#ident> {
-                ibuilder::Builder::from_buildable_value(<#ident as ibuilder::NewBuildableValue>::new_builder())
+                ibuilder::Builder::from_buildable_value(<#ident as ibuilder::NewBuildableValue>::new_buildable_value())
             }
         }
     }
@@ -306,7 +306,7 @@ fn gen_impl_new_buildable_value(gen: &StructGenerator) -> TokenStream2 {
     quote! {
         #[automatically_derived]
         impl ibuilder::NewBuildableValue for #ident {
-            fn new_builder() -> Box<dyn ibuilder::BuildableValue> {
+            fn new_buildable_value() -> Box<dyn ibuilder::BuildableValue> {
                 Box::new(#builder_ident::new())
             }
         }

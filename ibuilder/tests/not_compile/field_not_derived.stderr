@@ -4,4 +4,4 @@ error[E0277]: the trait bound `Bar: ibuilder::NewBuildableValue` is not satisfie
 3 | #[derive(ibuilder)]
   |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `Bar`
   |
-  = note: required by `ibuilder::NewBuildableValue::new_builder`
+  = note: required by `ibuilder::NewBuildableValue::new_buildable_value`

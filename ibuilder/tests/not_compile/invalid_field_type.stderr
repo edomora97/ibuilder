@@ -4,4 +4,4 @@ error[E0277]: the trait bound `&'static str: ibuilder::NewBuildableValue` is not
 3 | #[derive(ibuilder)]
   |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `&'static str`
   |
-  = note: required by `ibuilder::NewBuildableValue::new_builder`
+  = note: required by `ibuilder::NewBuildableValue::new_buildable_value`

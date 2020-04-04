@@ -154,7 +154,7 @@ pub trait BuildableValue: std::fmt::Debug {
 /// `get_value_any` method.
 pub trait NewBuildableValue {
     /// Construct a new `BuildableValue`.
-    fn new_builder() -> Box<dyn BuildableValue>;
+    fn new_buildable_value() -> Box<dyn BuildableValue>;
 }
 
 impl<T: 'static> Builder<T> {
