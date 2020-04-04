@@ -205,49 +205,39 @@ impl<T: 'static> Builder<T> {
     /// finish the builder.
     pub fn choose(&mut self, input: Input) -> Result<Option<T>, ChooseError> {
         // main menu
-        if self.current_fields.is_empty() {
+        let data = if self.current_fields.is_empty() {
             match input {
-                Input::Text(_) => Err(ChooseError::UnexpectedText),
-                Input::Choice(id) => {
-                    if id == FINALIZE_ID && self.is_done() {
+                Input::Text(data) => data,
+                Input::Choice(data) => {
+                    if data == FINALIZE_ID && self.is_done() {
                         return Ok(Some(self.finalize().expect("Finalize failed")));
                     }
-                    for field in self.builder.get_subfields(&self.current_fields) {
-                        if field == id {
-                            self.current_fields.push(field);
-                            return Ok(None);
-                        }
-                    }
-                    Err(ChooseError::UnexpectedChoice)
+                    data
                 }
             }
 
         // field menu
         } else {
-            let data = match input {
+            match input {
                 Input::Choice(data) if data == BACK_ID => {
                     self.current_fields.pop();
                     return Ok(None);
                 }
                 Input::Choice(data) => data,
                 Input::Text(data) => data,
-            };
-            let subfields = self.builder.get_subfields(&self.current_fields);
-            if subfields.is_empty() {
-                self.builder.apply(&data, &self.current_fields)?;
-                self.current_fields.pop();
-            } else {
-                for subfield in subfields {
-                    if subfield == data {
-                        self.builder.apply(&data, &self.current_fields)?;
-                        self.current_fields.push(subfield);
-                        return Ok(None);
-                    }
-                }
-                return Err(ChooseError::UnexpectedChoice);
             }
-            Ok(None)
+        };
+        let subfields = self.builder.get_subfields(&self.current_fields);
+        for subfield in subfields {
+            if subfield == data {
+                self.builder.apply(&data, &self.current_fields)?;
+                self.current_fields.push(subfield);
+                return Ok(None);
+            }
         }
+        self.builder.apply(&data, &self.current_fields)?;
+        self.current_fields.pop();
+        Ok(None)
     }
 
     /// If the process is done try to finalize the process, even if the user hasn't completed the
