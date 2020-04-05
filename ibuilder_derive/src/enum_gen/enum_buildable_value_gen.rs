@@ -15,6 +15,7 @@ pub fn gen_impl_buildable_value(gen: &EnumGenerator) -> TokenStream2 {
     let fn_get_value_any = gen_fn_get_value_any(gen);
     quote! {
         #[automatically_derived]
+        #[allow(unreachable_code)]
         impl ibuilder::BuildableValue for #builder_ident {
             #fn_apply
             #fn_get_options
@@ -51,6 +52,7 @@ fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream2 {
     let select_menu: Vec<_> = gen
         .variants
         .iter()
+        .filter(|v| !v.metadata.hidden)
         .map(|var| {
             let ident = &var.ident;
             let variant_builder_new = var.builder_new(&gen.ident);
@@ -84,6 +86,7 @@ fn fn_apply_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
     let apply: Vec<_> = gen
         .variants
         .iter()
+        .filter(|v| !v.metadata.hidden)
         .filter_map(|var| match &var.kind {
             VariantKind::Empty => None,
             VariantKind::Unnamed(_) | VariantKind::Named(_) => {
@@ -131,6 +134,7 @@ fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
     let choices: Vec<_> = gen
         .variants
         .iter()
+        .filter(|v| !v.metadata.hidden)
         .map(|var| {
             let ident = &var.ident;
             let name = var.actual_name();
@@ -170,6 +174,7 @@ fn fn_get_options_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
     let variants: Vec<_> = gen
         .variants
         .iter()
+        .filter(|v| !v.metadata.hidden)
         .filter_map(|var| {
             let ident = &var.ident;
             match &var.kind {
@@ -199,7 +204,7 @@ fn gen_fn_get_subfields(gen: &EnumGenerator) -> TokenStream2 {
     let variants: Vec<_> = gen
         .variants
         .iter()
-        .filter(|var| !var.kind.is_empty())
+        .filter(|var| !var.kind.is_empty() && !var.metadata.hidden)
         .map(|var| &var.ident)
         .collect();
     quote! {
@@ -229,6 +234,7 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
     let variants: Vec<_> = gen
         .variants
         .iter()
+        .filter(|v| !v.metadata.hidden)
         .map(|var| {
             let ident = &var.ident;
             let name = var.actual_name();
@@ -259,6 +265,7 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
             match &self.value {
                 None => ibuilder::nodes::Node::Leaf(ibuilder::nodes::Field::Missing),
                 #(#variants,)*
+                _ => unreachable!("Selected an hidden value")
             }
         }
     }

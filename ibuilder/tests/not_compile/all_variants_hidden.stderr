@@ -1,0 +1,8 @@
+error: all the variants are hidden
+ --> $DIR/all_variants_hidden.rs:4:1
+  |
+4 | / enum Enum {
+5 | |     #[ibuilder(hidden)]
+6 | |     Var1,
+7 | | }
+  | |_^

@@ -21,7 +21,12 @@ impl<'s> StructWithNamedFields<'s> {
             abort!(gen.span, "the struct must have at least one field");
         }
         Self {
-            fields: gen.field_names(),
+            fields: gen
+                .fields
+                .iter()
+                .filter(|f| !f.metadata.hidden)
+                .filter_map(|f| f.ident.clone())
+                .collect(),
             gen,
         }
     }
@@ -49,7 +54,7 @@ impl<'s> StructWithNamedFields<'s> {
             fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
                 if current_fields.is_empty() {
                     match data {
-                        #(stringify!(#field_names))|* => {},
+                        #(stringify!(#field_names) => {},)*
                         _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
                     }
                 } else {
@@ -92,7 +97,7 @@ impl<'s> StructWithNamedFields<'s> {
                     let rest = &current_fields[1..];
                     match field.as_str() {
                         #(stringify!(#field_names) => self.#field_names.get_options(rest),)*
-                        _ => panic!("Invalid current field: {} (the rest is {:?})", field, rest),
+                        _ => unreachable!("Invalid current field: {} (the rest is {:?})", field, rest),
                     }
                 }
             }
@@ -111,7 +116,7 @@ impl<'s> StructWithNamedFields<'s> {
                     let rest = &current_fields[1..];
                     match field.as_str() {
                         #(stringify!(#field_names) => self.#field_names.get_subfields(rest),)*
-                        _ => panic!("Invalid current field: {} (the rest is {:?})", field, rest),
+                        _ => unreachable!("Invalid current field: {} (the rest is {:?})", field, rest),
                     }
                 }
             }
@@ -125,6 +130,7 @@ impl<'s> StructWithNamedFields<'s> {
             .gen
             .fields
             .iter()
+            .filter(|f| !f.metadata.hidden)
             .map(|f| {
                 let ident = f.ident.as_ref().unwrap();
                 let name = f.actual_name();
@@ -151,7 +157,7 @@ impl<'s> StructWithNamedFields<'s> {
     /// Generate the implementation of the `get_value_any` method.
     fn gen_fn_get_value_any(&self) -> TokenStream2 {
         let ident = &self.gen.ident;
-        let field_names = &self.fields;
+        let field_names = self.gen.field_names();
         quote! {
             fn get_value_any(&self) -> Option<Box<dyn std::any::Any>> {
                 Some(Box::new(#ident {

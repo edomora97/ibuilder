@@ -1,4 +1,4 @@
-use proc_macro_error::{abort, ResultExt};
+use proc_macro_error::{abort, emit_warning, ResultExt};
 use syn::export::TokenStream2;
 use syn::punctuated::Punctuated;
 use syn::{Fields, Ident, Meta, MetaNameValue, Token, Variant};
@@ -53,6 +53,8 @@ pub struct VariantMetadata {
     prompt: Option<String>,
     /// Different name to use in the tree structure.
     rename: Option<String>,
+    /// Whether this variant is hidden.
+    hidden: bool,
 }
 
 /// The information about the type of variant.
@@ -77,13 +79,19 @@ impl EnumGenerator {
     /// relative to an enum.
     pub fn from_enum(ast: &syn::DeriveInput) -> EnumGenerator {
         match &ast.data {
-            syn::Data::Enum(data) => EnumGenerator {
-                ident: ast.ident.clone(),
-                builder_ident: gen_builder_ident(&ast.ident),
-                variants_builder_ident: gen_variants_builder_ident(&ast.ident),
-                variants: data.variants.iter().map(EnumVariant::from).collect(),
-                metadata: EnumMetadata::from(ast),
-            },
+            syn::Data::Enum(data) => {
+                let generator = EnumGenerator {
+                    ident: ast.ident.clone(),
+                    builder_ident: gen_builder_ident(&ast.ident),
+                    variants_builder_ident: gen_variants_builder_ident(&ast.ident),
+                    variants: data.variants.iter().map(EnumVariant::from).collect(),
+                    metadata: EnumMetadata::from(ast),
+                };
+                if generator.variants.iter().all(|v| v.metadata.hidden) {
+                    abort!(ast, "all the variants are hidden");
+                }
+                generator
+            }
             _ => panic!("expecting an enum"),
         }
     }
@@ -259,6 +267,7 @@ impl From<&Variant> for VariantMetadata {
         let mut metadata = VariantMetadata {
             prompt: None,
             rename: None,
+            hidden: false,
         };
         for attr in &var.attrs {
             if attr.path.is_ident("ibuilder") {
@@ -283,6 +292,16 @@ fn parse_variant_meta(meta: Meta, metadata: &mut VariantMetadata) {
                 parse_string_meta(&mut metadata.prompt, lit);
             } else if path.is_ident("rename") {
                 parse_string_meta(&mut metadata.rename, lit);
+            } else {
+                abort!(path, "unknown attribute");
+            }
+        }
+        Meta::Path(path) => {
+            if path.is_ident("hidden") {
+                if metadata.hidden {
+                    emit_warning!(path, "duplicated attribute");
+                }
+                metadata.hidden = true;
             } else {
                 abort!(path, "unknown attribute");
             }

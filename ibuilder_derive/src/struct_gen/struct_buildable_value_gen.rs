@@ -16,6 +16,7 @@ pub fn gen_impl_buildable_value(gen: &StructGenerator) -> TokenStream2 {
     };
     quote! {
         #[automatically_derived]
+        #[allow(unreachable_code)]
         impl ibuilder::BuildableValue for #builder_ident {
             #content
         }

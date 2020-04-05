@@ -1,8 +1,8 @@
-use proc_macro_error::{abort, ResultExt};
+use proc_macro_error::{abort, emit_warning, ResultExt};
 use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Attribute, Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
+use syn::{Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
@@ -64,6 +64,8 @@ pub struct FieldMetadata {
     pub prompt: Option<String>,
     /// Different name to use in the tree structure.
     pub rename: Option<String>,
+    /// Whether this field is hidden.
+    pub hidden: bool,
 }
 
 /// Generator for the list of field definition of a struct. It will generate either:
@@ -356,7 +358,7 @@ impl From<&Field> for StructField {
             ident: field.ident.clone(),
             ty: field.ty.clone(),
             field: field.clone(),
-            metadata: get_field_metadata(&field.attrs),
+            metadata: get_field_metadata(&field),
         };
         if res.metadata.default.is_some() && res.builtin_type().is_none() {
             abort!(field, "default value is supported only on plain types");
@@ -366,13 +368,14 @@ impl From<&Field> for StructField {
 }
 
 /// Extract the `FieldMetadata` from the attribute list of a field.
-fn get_field_metadata(attrs: &[Attribute]) -> FieldMetadata {
+fn get_field_metadata(field: &Field) -> FieldMetadata {
     let mut metadata = FieldMetadata {
         default: None,
         prompt: None,
         rename: None,
+        hidden: false,
     };
-    for attr in attrs {
+    for attr in &field.attrs {
         if attr.path.is_ident("ibuilder") {
             let meta = attr
                 .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
@@ -381,6 +384,12 @@ fn get_field_metadata(attrs: &[Attribute]) -> FieldMetadata {
                 parse_field_meta(meta, &mut metadata);
             }
         }
+    }
+    if metadata.hidden && field.ident.is_none() {
+        abort!(field, "unnamed fields cannot be hidden");
+    }
+    if metadata.hidden && metadata.default.is_none() {
+        abort!(field, "a default value is required for hidden fields");
     }
     metadata
 }
@@ -400,6 +409,16 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
                 parse_string_meta(&mut metadata.prompt, lit);
             } else if path.is_ident("rename") {
                 parse_string_meta(&mut metadata.rename, lit);
+            } else {
+                abort!(path, "unknown attribute");
+            }
+        }
+        Meta::Path(path) => {
+            if path.is_ident("hidden") {
+                if metadata.hidden {
+                    emit_warning!(path, "duplicated attribute");
+                }
+                metadata.hidden = true;
             } else {
                 abort!(path, "unknown attribute");
             }
