@@ -22,3 +22,4 @@ ibuilder_derive = { path = "../ibuilder_derive", optional = true, version = "0.1
 [dev-dependencies]
 trybuild = "1.0"
 ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.3" }
+rand = "0.7"

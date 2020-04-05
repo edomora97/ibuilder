@@ -73,17 +73,22 @@ impl<'s> StructWithNamedFields<'s> {
     /// Generate the implementation of the `get_options` method.
     fn gen_fn_get_options(&self) -> TokenStream2 {
         let field_names = &self.fields;
-        let choices = self.gen.fields.iter().map(|f| {
-            let ident = f.ident.as_ref().unwrap();
-            let name = f.actual_name();
-            quote! {
-                ibuilder::Choice {
-                    choice_id: stringify!(#ident).to_string(),
-                    text: "Edit ".to_string() + #name,
-                    needs_action: self.#ident.get_value_any().is_none(),
+        let choices = self
+            .gen
+            .fields
+            .iter()
+            .filter(|f| !f.metadata.hidden)
+            .map(|f| {
+                let ident = f.ident.as_ref().unwrap();
+                let name = f.actual_name();
+                quote! {
+                    ibuilder::Choice {
+                        choice_id: stringify!(#ident).to_string(),
+                        text: "Edit ".to_string() + #name,
+                        needs_action: self.#ident.get_value_any().is_none(),
+                    }
                 }
-            }
-        });
+            });
         quote! {
             fn get_options(&self, current_fields: &[String]) -> ibuilder::Options {
                 if current_fields.is_empty() {

@@ -454,9 +454,9 @@ where
     }
 
     fn get_value_any(&self) -> Option<Box<dyn Any>> {
-        Some(Box::new(
+        Some(Box::new(Box::new(
             *self.value.get_value_any()?.downcast::<T>().unwrap(),
-        ))
+        )))
     }
 }
 
