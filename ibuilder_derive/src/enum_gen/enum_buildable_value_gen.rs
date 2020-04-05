@@ -34,7 +34,7 @@ fn gen_fn_apply(gen: &EnumGenerator) -> TokenStream2 {
     let select_menu = fn_apply_select_menu(gen);
     let inner_menu = fn_apply_inner_menu(gen);
     quote! {
-        fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
+        fn apply(&mut self, data: ibuilder::Input, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
             // select variant menu
             if current_fields.is_empty() {
                 #select_menu
@@ -74,8 +74,13 @@ fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream2 {
         .collect();
     quote! {
         match data {
-            #(#select_menu,)*
-            _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
+            ibuilder::Input::Choice(data) => {
+                match data.as_str() {
+                    #(#select_menu,)*
+                    _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
+                }
+            }
+            _ => return Err(ibuilder::ChooseError::UnexpectedText)
         }
     }
 }

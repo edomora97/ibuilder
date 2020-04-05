@@ -142,8 +142,8 @@ where
 
 /// The interactive builder for a base type.
 pub trait BuildableValue: std::fmt::Debug {
-    /// Try to change the inner value using the provided string.
-    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError>;
+    /// Try to change the inner value using the provided input.
+    fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError>;
 
     /// The options to show to the user for setting this value.
     fn get_options(&self, current_fields: &[String]) -> Options;
@@ -233,37 +233,40 @@ impl<T: 'static> Builder<T> {
     /// finish the builder.
     pub fn choose(&mut self, input: Input) -> Result<Option<T>, ChooseError> {
         // main menu
-        let data = if self.current_fields.is_empty() {
-            match input {
-                Input::Text(data) => data,
+        if self.current_fields.is_empty() {
+            match &input {
                 Input::Choice(data) => {
                     if data == FINALIZE_ID && self.is_done() {
                         return Ok(Some(self.finalize().expect("Finalize failed")));
                     }
-                    data
                 }
+                _ => {}
             }
 
         // field menu
         } else {
-            match input {
+            match &input {
                 Input::Choice(data) if data == BACK_ID => {
                     self.current_fields.pop();
                     return Ok(None);
                 }
-                Input::Choice(data) => data,
-                Input::Text(data) => data,
+                _ => {}
             }
         };
         let subfields = self.builder.get_subfields(&self.current_fields);
         for subfield in subfields {
-            if subfield == data {
-                self.builder.apply(&data, &self.current_fields)?;
-                self.current_fields.push(subfield);
-                return Ok(None);
+            match &input {
+                Input::Choice(data) => {
+                    if subfield == data.as_str() {
+                        self.builder.apply(input, &self.current_fields)?;
+                        self.current_fields.push(subfield);
+                        return Ok(None);
+                    }
+                }
+                Input::Text(_) => {}
             }
         }
-        self.builder.apply(&data, &self.current_fields)?;
+        self.builder.apply(input, &self.current_fields)?;
         self.current_fields.pop();
         Ok(None)
     }

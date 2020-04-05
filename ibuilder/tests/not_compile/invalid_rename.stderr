@@ -1,0 +1,5 @@
+error: expecting a string
+ --> $DIR/invalid_rename.rs:5:25
+  |
+5 |     #[ibuilder(rename = 42)]
+  |                         ^^

@@ -51,11 +51,16 @@ impl<'s> StructWithNamedFields<'s> {
     fn gen_fn_apply(&self) -> TokenStream2 {
         let field_names = &self.fields;
         quote! {
-            fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
+            fn apply(&mut self, data: ibuilder::Input, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
                 if current_fields.is_empty() {
                     match data {
-                        #(stringify!(#field_names) => {},)*
-                        _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
+                        ibuilder::Input::Choice(data) => {
+                            match data.as_str() {
+                                #(stringify!(#field_names) => {},)*
+                                _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
+                            }
+                        }
+                        _ => return Err(ibuilder::ChooseError::UnexpectedText)
                     }
                 } else {
                     let field = &current_fields[0];

@@ -53,14 +53,20 @@ fn random() {
             });
         } else {
             if rand::random() {
-                let _res = builder.choose(Input::choice("totally not a valid choice"));
-            // TODO: this actually triggers a bug. Need to update the signature of `apply`
-            // if res.as_ref().unwrap_err() != &ChooseError::UnexpectedChoice {
-            //     panic!(
-            //         "Expecting ChooseError::UnexpectedChoice, but got: {:?}",
-            //         res
-            //     );
-            // }
+                let res = builder.choose(Input::choice("totally not a valid choice"));
+                if res.as_ref().unwrap_err() != &ChooseError::UnexpectedChoice {
+                    panic!(
+                        "Expecting ChooseError::UnexpectedChoice, but got: {:?}",
+                        res
+                    );
+                }
+                let options = builder.get_options();
+                if !options.text_input {
+                    let res = builder.choose(Input::text("surprise! some text!"));
+                    if res.as_ref().unwrap_err() != &ChooseError::UnexpectedText {
+                        panic!("Expecting ChooseError::UnexpectedText, but got: {:?}", res);
+                    }
+                }
             } else {
                 let choice = options.choices.choose(&mut rng).expect("Empty choices");
                 builder

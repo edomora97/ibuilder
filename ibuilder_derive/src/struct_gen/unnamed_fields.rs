@@ -42,7 +42,7 @@ impl<'s> StructWithUnnamedFields<'s> {
     /// Generate the implementation of the `apply` method.
     fn gen_fn_apply(&self) -> TokenStream2 {
         quote! {
-            fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
+            fn apply(&mut self, data: ibuilder::Input, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
                 self.0.apply(data, current_fields)
             }
         }

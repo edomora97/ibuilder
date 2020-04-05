@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use crate::nodes::{Field, FieldKind, Node};
 use crate::{
-    BuildableValue, BuildableValueConfig, Choice, ChooseError, NewBuildableValue, Options,
+    BuildableValue, BuildableValueConfig, Choice, ChooseError, Input, NewBuildableValue, Options,
 };
 
 macro_rules! type_builder_boilerplate {
@@ -66,7 +66,7 @@ macro_rules! type_builder {
         impl BuildableValue for $name {
             type_builder_boilerplate!();
 
-            fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+            fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
                 if !current_fields.is_empty() {
                     panic!(
                         "{}.apply() called with non empty fields: {:?}",
@@ -74,12 +74,16 @@ macro_rules! type_builder {
                         current_fields
                     );
                 }
-                self.value =
-                    Some(
-                        <$base>::from_str(data).map_err(|e| ChooseError::InvalidText {
-                            error: e.to_string(),
-                        })?,
-                    );
+                match data {
+                    Input::Text(data) => {
+                        self.value = Some(<$base>::from_str(&data).map_err(|e| {
+                            ChooseError::InvalidText {
+                                error: e.to_string(),
+                            }
+                        })?);
+                    }
+                    _ => return Err(ChooseError::UnexpectedChoice),
+                }
                 Ok(())
             }
 
@@ -134,7 +138,7 @@ type_builder_struct!(bool, BoolBuilder, "True or false?");
 impl BuildableValue for BoolBuilder {
     type_builder_boilerplate!();
 
-    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+    fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
         if !current_fields.is_empty() {
             panic!(
                 "BoolBuilder.apply() called with non empty fields: {:?}",
@@ -142,9 +146,12 @@ impl BuildableValue for BoolBuilder {
             );
         }
         match data {
-            "true" => self.value = Some(true),
-            "false" => self.value = Some(false),
-            _ => return Err(ChooseError::UnexpectedChoice),
+            Input::Choice(data) => match data.as_str() {
+                "true" => self.value = Some(true),
+                "false" => self.value = Some(false),
+                _ => return Err(ChooseError::UnexpectedChoice),
+            },
+            Input::Text(_) => return Err(ChooseError::UnexpectedText),
         }
         Ok(())
     }
@@ -251,24 +258,41 @@ impl<T> BuildableValue for VecBuilder<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+    fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
         // vec main menu
         if current_fields.is_empty() {
-            if data == "__new" {
-                self.items.push(T::new_buildable_value(Default::default()));
+            match data {
+                Input::Choice(data) if data == "__new" => {
+                    self.items.push(T::new_buildable_value(Default::default()));
+                }
+                Input::Choice(data) => {
+                    if data != "__remove" {
+                        // check that the inserted index is valid
+                        let index =
+                            usize::from_str(&data).map_err(|_| ChooseError::UnexpectedChoice)?;
+                        if index >= self.items.len() {
+                            return Err(ChooseError::UnexpectedChoice);
+                        }
+                    }
+                }
+                _ => return Err(ChooseError::UnexpectedText),
             }
         // remove item or apply to element
         } else {
             let field = &current_fields[0];
             let rest = &current_fields[1..];
             match field.as_str() {
-                "__remove" => {
-                    let index = usize::from_str(data).map_err(|_| ChooseError::UnexpectedChoice)?;
-                    if index >= self.items.len() {
-                        return Err(ChooseError::UnexpectedChoice);
+                "__remove" => match data {
+                    Input::Choice(choice) => {
+                        let index =
+                            usize::from_str(&choice).map_err(|_| ChooseError::UnexpectedChoice)?;
+                        if index >= self.items.len() {
+                            return Err(ChooseError::UnexpectedChoice);
+                        }
+                        self.items.remove(index);
                     }
-                    self.items.remove(index);
-                }
+                    Input::Text(_) => return Err(ChooseError::UnexpectedText),
+                },
                 "__new" => {
                     self.items
                         .last_mut()
@@ -437,7 +461,7 @@ impl<T> BuildableValue for BoxBuilder<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+    fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
         self.value.apply(data, current_fields)
     }
 
@@ -500,13 +524,16 @@ impl<T> BuildableValue for OptionBuilder<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+    fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
         if current_fields.is_empty() {
             match data {
-                "__remove" => self.value = None,
-                "__edit" => {}
-                "__set" => self.value = Some(T::new_buildable_value(Default::default())),
-                _ => return Err(ChooseError::UnexpectedChoice),
+                Input::Choice(data) => match data.as_str() {
+                    "__remove" => self.value = None,
+                    "__edit" => {}
+                    "__set" => self.value = Some(T::new_buildable_value(Default::default())),
+                    _ => return Err(ChooseError::UnexpectedChoice),
+                },
+                Input::Text(_) => return Err(ChooseError::UnexpectedText),
             }
             Ok(())
         } else {
