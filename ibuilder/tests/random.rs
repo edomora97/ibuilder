@@ -1,3 +1,5 @@
+#![allow(clippy::box_vec, clippy::type_complexity)]
+
 use ibuilder::*;
 use rand::prelude::*;
 
@@ -51,33 +53,31 @@ fn random() {
                     input, e, builder
                 )
             });
-        } else {
-            if rand::random() {
-                let res = builder.choose(Input::choice("totally not a valid choice"));
-                if res.as_ref().unwrap_err() != &ChooseError::UnexpectedChoice {
-                    panic!(
-                        "Expecting ChooseError::UnexpectedChoice, but got: {:?}",
-                        res
-                    );
-                }
-                let options = builder.get_options();
-                if !options.text_input {
-                    let res = builder.choose(Input::text("surprise! some text!"));
-                    if res.as_ref().unwrap_err() != &ChooseError::UnexpectedText {
-                        panic!("Expecting ChooseError::UnexpectedText, but got: {:?}", res);
-                    }
-                }
-            } else {
-                let choice = options.choices.choose(&mut rng).expect("Empty choices");
-                builder
-                    .choose(Input::choice(&choice.choice_id))
-                    .unwrap_or_else(|e| {
-                        panic!(
-                            "Failed to choose option {:?}: {}\nBuilder: {:#?}",
-                            choice, e, builder
-                        )
-                    });
+        } else if rand::random() {
+            let res = builder.choose(Input::choice("totally not a valid choice"));
+            if res.as_ref().unwrap_err() != &ChooseError::UnexpectedChoice {
+                panic!(
+                    "Expecting ChooseError::UnexpectedChoice, but got: {:?}",
+                    res
+                );
             }
+            let options = builder.get_options();
+            if !options.text_input {
+                let res = builder.choose(Input::text("surprise! some text!"));
+                if res.as_ref().unwrap_err() != &ChooseError::UnexpectedText {
+                    panic!("Expecting ChooseError::UnexpectedText, but got: {:?}", res);
+                }
+            }
+        } else {
+            let choice = options.choices.choose(&mut rng).expect("Empty choices");
+            builder
+                .choose(Input::choice(&choice.choice_id))
+                .unwrap_or_else(|e| {
+                    panic!(
+                        "Failed to choose option {:?}: {}\nBuilder: {:#?}",
+                        choice, e, builder
+                    )
+                });
         }
     }
 }

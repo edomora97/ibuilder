@@ -234,13 +234,10 @@ impl<T: 'static> Builder<T> {
     pub fn choose(&mut self, input: Input) -> Result<Option<T>, ChooseError> {
         // main menu
         if self.current_fields.is_empty() {
-            match &input {
-                Input::Choice(data) => {
-                    if data == FINALIZE_ID && self.is_done() {
-                        return Ok(Some(self.finalize().expect("Finalize failed")));
-                    }
+            if let Input::Choice(data) = &input {
+                if data == FINALIZE_ID && self.is_done() {
+                    return Ok(Some(self.finalize().expect("Finalize failed")));
                 }
-                _ => {}
             }
 
         // field menu
