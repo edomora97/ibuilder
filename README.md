@@ -47,7 +47,7 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 ```rust
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Example {
     int_field: i64,
     string_field: String,

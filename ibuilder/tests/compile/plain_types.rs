@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     f_i8: i8,
     f_i16: i16,

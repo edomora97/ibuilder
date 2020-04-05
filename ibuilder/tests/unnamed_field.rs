@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 struct Test(i64);
 
 #[test]

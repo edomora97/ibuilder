@@ -1,12 +1,12 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     bar: Vec<i32>,
     baz: Vec<Bim>,
 }
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 pub struct Bim {
     lol: i32,
 }

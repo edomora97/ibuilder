@@ -1,12 +1,12 @@
 use ibuilder::*;
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 struct Empty1;
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 struct Empty2();
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 struct Empty3 {}
 
 fn main() {

@@ -1,21 +1,21 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     bar: Bar,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Bar {
     baz: Baz,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Baz {
     bim: Bim,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Bim {
     val: String,
 }

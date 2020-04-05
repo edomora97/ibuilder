@@ -1,7 +1,7 @@
 mod mod1 {
     use ibuilder::*;
 
-    #[derive(ibuilder)]
+    #[derive(IBuilder)]
     pub struct Foo {
         bar: super::mod2::Bar,
     }
@@ -10,7 +10,7 @@ mod mod1 {
 mod mod2 {
     use ibuilder::*;
 
-    #[derive(ibuilder)]
+    #[derive(IBuilder)]
     pub struct Bar {
         field: i64,
     }

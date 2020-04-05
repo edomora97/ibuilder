@@ -11,14 +11,14 @@
 //! The builder provides the user with interactive menu-like interfaces, keeping the UI abstract
 //! and rust type-safeness.
 //!
-//! The API of this crate is very simple, you start with a struct derived from `ibuilder` and call
+//! The API of this crate is very simple, you start with a struct derived from `IBuilder` and call
 //! the auto-generated function `builder()` from the `Buildable` trait. This will construct a new
 //! custom-built `Builder` to use for the communication. The `Builder` provides two main functions:
 //! `get_options()` for getting the current state of the builder and the list of possible options
 //! the user can choose, and `choose(input)` that validates and inserts the choice of the user.
 //!
 //! ## Rationale
-//! When building an interactive application (e.g. a Telegram Bot, a Console application) which
+//! When building an interactive application (e.g. a Telegram Bot or a console application) which
 //! needs loads of configurations it can be pretty hard to come out with a decent interface without
 //! writing loads of code for handling all the corner cases.
 //!
@@ -31,6 +31,7 @@
 //! ## Supported features
 //! - Deriving any struct with named fields (or with one unnamed field like `struct Foo(i64)`)
 //! - Default values for the fields
+//! - Custom message prompt for fields, structs, enums and variants
 //! - Nested structures (i.e. custom types)
 //! - Enums (also with variants with field, but only one if unnamed)
 //! - Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and
@@ -45,7 +46,7 @@
 //! ```
 //! use ibuilder::*;
 //!
-//! #[derive(ibuilder)]
+//! #[derive(IBuilder)]
 //! struct Example {
 //!     int_field: i64,
 //!     string_field: String,
@@ -80,7 +81,7 @@
 //! ```
 
 #[cfg(feature = "derive")]
-pub use ibuilder_derive::ibuilder;
+pub use ibuilder_derive::IBuilder;
 
 use std::any::Any;
 use std::marker::PhantomData;
@@ -98,7 +99,8 @@ pub const FINALIZE_ID: &str = "__finalize";
 pub const BACK_ID: &str = "__back";
 
 /// Interactive builder for creating instances of the struct `T` by communicating. To instantiate a
-/// new `Builder` for the type `T`, make `T` derive from `ibuilder` and call `::builder()` on it.
+/// new `Builder` for the type `T`, make `T` derive from `IBuilder` and call `builder()` on it from
+/// the `Buildable` trait.
 ///
 /// ## Communication
 /// After having instantiated a new `Builder<T>` you can call the `get_options()` method for
@@ -124,7 +126,7 @@ pub struct Builder<T> {
     inner_type: PhantomData<T>,
 }
 
-/// A type that supports being built using a `Builder`. Deriving `ibuilder` an auto-generated
+/// A type that supports being built using a `Builder`. Deriving `IBuilder` an auto-generated
 /// implementation for this trait is provided.
 pub trait Buildable<T> {
     /// Create a new `Builder<T>` for the current type.

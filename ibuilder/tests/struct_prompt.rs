@@ -1,15 +1,17 @@
 #![allow(dead_code)]
 
-#[derive(ibuilder::ibuilder)]
+use ibuilder::*;
+
+#[derive(IBuilder)]
 struct DefaultPrompt {
     field: i32,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "lol or lel?")]
 struct UnnamedStruct(String);
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "lol or lel?")]
 struct CustomPrompt {
     #[ibuilder(prompt = "plain field prompt")]
@@ -20,19 +22,17 @@ struct CustomPrompt {
     nest: Nested,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "base prompt")]
 struct Nested {
     field: i32,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "base prompt")]
 enum Enum {
     Var,
 }
-
-use ibuilder::{Buildable, Input, BACK_ID};
 
 #[test]
 fn default_prompt() {

@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Foo {
     field: i64,
     ups: &'static str,

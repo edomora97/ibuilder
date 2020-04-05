@@ -1,12 +1,12 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Foo {
     #[ibuilder(default = 42)]
     field: Bar,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Bar {
     #[ibuilder(default = 42)]
     field: i32,

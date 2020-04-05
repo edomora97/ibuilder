@@ -1,11 +1,13 @@
 #![allow(dead_code)]
 
-#[derive(ibuilder::ibuilder)]
+use ibuilder::*;
+
+#[derive(IBuilder)]
 enum DefaultPrompt {
     Var,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "lol or lel?")]
 enum CustomPrompt {
     Var1,
@@ -18,13 +20,11 @@ enum CustomPrompt {
     },
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(prompt = "base prompt")]
 struct Nested {
     field: i32,
 }
-
-use ibuilder::{Buildable, Input, BACK_ID};
 
 #[test]
 fn default_prompt() {

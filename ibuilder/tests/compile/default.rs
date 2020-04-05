@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     #[ibuilder(default = 42)]
     bar: i32,

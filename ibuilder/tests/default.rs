@@ -1,11 +1,11 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct NestedFoo {
     foo: Foo,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     #[ibuilder(default = 42)]
     bar: i32,

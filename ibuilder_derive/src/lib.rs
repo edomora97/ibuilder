@@ -8,8 +8,8 @@
 //!
 //! Usage:
 //! ```
-//! # use ibuilder_derive::ibuilder;
-//! #[derive(ibuilder)]
+//! # use ibuilder_derive::IBuilder;
+//! #[derive(IBuilder)]
 //! struct Example {
 //!     /// The help message for field1
 //!     field1: i64,
@@ -38,18 +38,18 @@ use crate::struct_gen::StructGenerator;
 mod enum_gen;
 mod struct_gen;
 
-/// Derive macro for `ibuilder`.
+/// Derive macro for `IBuilder`.
 #[proc_macro_error]
-#[proc_macro_derive(ibuilder, attributes(ibuilder))]
+#[proc_macro_derive(IBuilder, attributes(ibuilder))]
 pub fn ibuilder_derive(input: TokenStream) -> TokenStream {
     ibuilder_macro(&syn::parse(input).unwrap())
 }
 
 /// Main macro body. It generates the following constructs:
-/// - `impl Name { fn builder() -> Builder<Name> { ... } }`
-/// - `struct __Name_BuildableValueImpl` with the `BuildableValue` fields
-/// - `impl BuildableValue for __Name_BuildableValueImpl`
+/// - `impl Buildable for Name`
 /// - `impl NewBuildableValue for Name`
+/// - Some private structure and enums for keeping the state of the builder for `Name`, all those
+///   types have the name starting with `__`.
 fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
     match &ast.data {
         syn::Data::Struct(_) => StructGenerator::from_struct(ast).to_token_stream().into(),

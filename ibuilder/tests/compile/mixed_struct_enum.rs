@@ -1,25 +1,25 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Foo {
     bar: Bar,
     bim: Box<Bim>,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Bar {
     baz: Baz,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Baz(Bim);
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub struct Bim {
     val: Vec<Enum>,
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub enum Enum {
     Var1,
     Var2(String),
@@ -28,7 +28,7 @@ pub enum Enum {
     Var5(Enumeration),
 }
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 pub enum Enumeration {
     Var1,
     Var2(Vec<Vec<Enum>>),

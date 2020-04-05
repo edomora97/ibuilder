@@ -10,7 +10,7 @@ you probably are looking for that.
 
 Usage:
 ```rust
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Example {
     /// The help message for field1
     field1: i64,

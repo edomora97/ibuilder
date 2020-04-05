@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Foo {
     #[ibuilder(default = "not an integer")]
     field: i64,

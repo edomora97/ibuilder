@@ -1,7 +1,7 @@
 #![allow(clippy::cognitive_complexity)]
 use ibuilder::*;
 
-#[derive(Debug, ibuilder, Eq, PartialEq)]
+#[derive(Debug, IBuilder, Eq, PartialEq)]
 struct Base {
     integer: i32,
     #[ibuilder(default = 42)]
@@ -9,7 +9,7 @@ struct Base {
     inner: Inner,
 }
 
-#[derive(Debug, ibuilder, Eq, PartialEq)]
+#[derive(Debug, IBuilder, Eq, PartialEq)]
 struct Inner {
     string: String,
     #[ibuilder(default = "lol")]

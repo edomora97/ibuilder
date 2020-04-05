@@ -1,23 +1,23 @@
 error: unknown attribute
- --> $DIR/unknown_attribute3.rs:3:16
+ --> $DIR/unknown_attribute3.rs:5:16
   |
-3 |     #[ibuilder(wibble(monster))]
+5 |     #[ibuilder(wibble(monster))]
   |                ^^^^^^^^^^^^^^^
 
 error: unknown attribute
- --> $DIR/unknown_attribute3.rs:8:12
-  |
-8 | #[ibuilder(wibble(monster))]
-  |            ^^^^^^^^^^^^^^^
-
-error: unknown attribute
-  --> $DIR/unknown_attribute3.rs:14:12
+  --> $DIR/unknown_attribute3.rs:10:12
    |
-14 | #[ibuilder(wibble(monster))]
+10 | #[ibuilder(wibble(monster))]
    |            ^^^^^^^^^^^^^^^
 
 error: unknown attribute
-  --> $DIR/unknown_attribute3.rs:21:16
+  --> $DIR/unknown_attribute3.rs:16:12
    |
-21 |     #[ibuilder(wibble(monster))]
+16 | #[ibuilder(wibble(monster))]
+   |            ^^^^^^^^^^^^^^^
+
+error: unknown attribute
+  --> $DIR/unknown_attribute3.rs:23:16
+   |
+23 |     #[ibuilder(wibble(monster))]
    |                ^^^^^^^^^^^^^^^

@@ -1,6 +1,6 @@
 use ibuilder::*;
 
-#[derive(Debug, ibuilder)]
+#[derive(Debug, IBuilder)]
 enum Enum {
     Var1,
     Var2 {

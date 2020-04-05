@@ -1,7 +1,7 @@
 error[E0277]: the trait bound `Bar: ibuilder::NewBuildableValue` is not satisfied
  --> $DIR/field_not_derived.rs:3:10
   |
-3 | #[derive(ibuilder)]
+3 | #[derive(IBuilder)]
   |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `Bar`
   |
   = note: required by `ibuilder::NewBuildableValue::new_buildable_value`

@@ -120,7 +120,7 @@ impl EnumVariant {
         };
         quote! {
             #[allow(non_camel_case_types)]
-            #[derive(ibuilder::ibuilder)]
+            #[derive(IBuilder)]
             #attrs
             struct #ident #fields_def
         }

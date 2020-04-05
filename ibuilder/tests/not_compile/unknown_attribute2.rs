@@ -1,22 +1,24 @@
-#[derive(ibuilder::ibuilder)]
+use ibuilder::*;
+
+#[derive(IBuilder)]
 struct Foo {
     #[ibuilder(wibble_monster)]
     field: i64,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(wibble_monster)]
 struct Bar {
     field: i64,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 #[ibuilder(wibble_monster)]
 enum Baz {
     Var,
 }
 
-#[derive(ibuilder::ibuilder)]
+#[derive(IBuilder)]
 enum Bim {
     #[ibuilder(wibble_monster)]
     Var,

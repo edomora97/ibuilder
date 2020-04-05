@@ -1,6 +1,6 @@
-use ibuilder::{ibuilder, Buildable};
+use ibuilder::{Buildable, IBuilder};
 
-#[derive(ibuilder)]
+#[derive(IBuilder)]
 struct Looooooong {
     field0: i64,
     field1: i64,
