@@ -1,68 +1,17 @@
 error: structs with unnamed fields must have only one field
- --> $DIR/empty_struct.rs:4:1
+ --> $DIR/empty_struct.rs:4:8
   |
 4 | struct Empty1;
-  | ^^^^^^
+  |        ^^^^^^
 
 error: structs with unnamed fields must have only one field
- --> $DIR/empty_struct.rs:7:1
+ --> $DIR/empty_struct.rs:7:8
   |
 7 | struct Empty2();
-  | ^^^^^^
+  |        ^^^^^^
 
 error: the struct must have at least one field
-  --> $DIR/empty_struct.rs:10:1
+  --> $DIR/empty_struct.rs:10:8
    |
 10 | struct Empty3 {}
-   | ^^^^^^
-
-error[E0599]: no function or associated item named `builder` found for struct `Empty1` in the current scope
-  --> $DIR/empty_struct.rs:13:13
-   |
-4  | struct Empty1;
-   | -------------- function or associated item `builder` not found for this
-...
-13 |     Empty1::builder();
-   |             ^^^^^^^ function or associated item not found in `Empty1`
-   |
-   = note: the method `builder` exists but the following trait bounds were not satisfied:
-           `&Empty1 : ibuilder::Buildable<_>`
-           `&mut Empty1 : ibuilder::Buildable<_>`
-           `Empty1 : ibuilder::Buildable<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `builder`, perhaps you need to implement it:
-           candidate #1: `ibuilder::Buildable`
-
-error[E0599]: no function or associated item named `builder` found for struct `Empty2` in the current scope
-  --> $DIR/empty_struct.rs:14:13
-   |
-7  | struct Empty2();
-   | ---------------- function or associated item `builder` not found for this
-...
-14 |     Empty2::builder();
-   |             ^^^^^^^ function or associated item not found in `Empty2`
-   |
-   = note: the method `builder` exists but the following trait bounds were not satisfied:
-           `&Empty2 : ibuilder::Buildable<_>`
-           `&mut Empty2 : ibuilder::Buildable<_>`
-           `Empty2 : ibuilder::Buildable<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `builder`, perhaps you need to implement it:
-           candidate #1: `ibuilder::Buildable`
-
-error[E0599]: no function or associated item named `builder` found for struct `Empty3` in the current scope
-  --> $DIR/empty_struct.rs:15:13
-   |
-10 | struct Empty3 {}
-   | ------------- function or associated item `builder` not found for this
-...
-15 |     Empty3::builder();
-   |             ^^^^^^^ function or associated item not found in `Empty3`
-   |
-   = note: the method `builder` exists but the following trait bounds were not satisfied:
-           `&Empty3 : ibuilder::Buildable<_>`
-           `&mut Empty3 : ibuilder::Buildable<_>`
-           `Empty3 : ibuilder::Buildable<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `builder`, perhaps you need to implement it:
-           candidate #1: `ibuilder::Buildable`
+   |        ^^^^^^

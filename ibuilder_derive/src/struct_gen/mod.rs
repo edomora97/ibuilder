@@ -1,7 +1,6 @@
 use proc_macro_error::{abort, emit_warning, ResultExt};
 use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
 use syn::{Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
@@ -132,7 +131,7 @@ impl StructGenerator {
                         }
                         syn::Fields::Unit => vec![],
                     },
-                    span: ast.span(),
+                    span: ast.ident.span(),
                     named_fields,
                     metadata,
                 }

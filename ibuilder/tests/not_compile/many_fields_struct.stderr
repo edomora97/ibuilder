@@ -1,22 +1,5 @@
 error: structs with unnamed fields must have only one field
- --> $DIR/many_fields_struct.rs:4:1
+ --> $DIR/many_fields_struct.rs:4:8
   |
 4 | struct Foo(i64, String);
-  | ^^^^^^
-
-error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
- --> $DIR/many_fields_struct.rs:7:10
-  |
-4 | struct Foo(i64, String);
-  | ------------------------ function or associated item `builder` not found for this
-...
-7 |     Foo::builder();
-  |          ^^^^^^^ function or associated item not found in `Foo`
-  |
-  = note: the method `builder` exists but the following trait bounds were not satisfied:
-          `&Foo : ibuilder::Buildable<_>`
-          `&mut Foo : ibuilder::Buildable<_>`
-          `Foo : ibuilder::Buildable<_>`
-  = help: items from traits can only be used if the trait is implemented and in scope
-  = note: the following trait defines an item `builder`, perhaps you need to implement it:
-          candidate #1: `ibuilder::Buildable`
+  |        ^^^

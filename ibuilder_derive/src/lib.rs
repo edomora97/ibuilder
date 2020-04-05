@@ -28,9 +28,9 @@
 
 use proc_macro::TokenStream;
 
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 
-use proc_macro_error::{abort, proc_macro_error};
+use proc_macro_error::{abort, proc_macro_error, set_dummy};
 
 use crate::enum_gen::EnumGenerator;
 use crate::struct_gen::StructGenerator;
@@ -51,6 +51,7 @@ pub fn ibuilder_derive(input: TokenStream) -> TokenStream {
 /// - Some private structure and enums for keeping the state of the builder for `Name`, all those
 ///   types have the name starting with `__`.
 fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
+    fix_double_error(&ast.ident);
     match &ast.data {
         syn::Data::Struct(_) => StructGenerator::from_struct(ast).to_token_stream().into(),
         syn::Data::Enum(_) => EnumGenerator::from_enum(ast).to_token_stream().into(),
@@ -69,4 +70,12 @@ fn parse_string_meta(out: &mut Option<String>, lit: syn::Lit) {
     } else {
         abort!(lit, "duplicated attribute");
     }
+}
+
+fn fix_double_error(ident: &syn::Ident) {
+    set_dummy(quote! {
+        impl ibuilder::Buildable<#ident> for #ident {
+            fn builder() -> ibuilder::Builder<#ident> { unimplemented!() }
+        }
+    });
 }
