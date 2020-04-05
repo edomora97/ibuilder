@@ -35,15 +35,12 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 - Default values for the fields
 - Custom message prompt for fields, structs, enums and variants
 - Renaming fields, structs and variants for better looking options
+- Hidden fields (that takes the value only from the default)
 - Nested structures (i.e. custom types)
 - Enums (also with variants with field, but only one if unnamed)
-- Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and
-  `Vec<T>`
-- Any field type that implementes the `NewBuildableValue` trait.
-
-#### Not yet supported, but planned
-- Hidden fields (that takes the value only from the default)
-- Field types: `Option<T>`
+- Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>`,
+  `Vec<T>` and `Option<T>`
+- Any field type that implementes the `NewBuildableValue` trait
 
 ### Example of usage
 ```rust

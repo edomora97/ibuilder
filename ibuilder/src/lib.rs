@@ -36,12 +36,9 @@
 //! - Hidden fields (that takes the value only from the default)
 //! - Nested structures (i.e. custom types)
 //! - Enums (also with variants with field, but only one if unnamed)
-//! - Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and
-//!   `Vec<T>`
-//! - Any field type that implementes the `NewBuildableValue` trait.
-//!
-//! ### Not yet supported, but planned
-//! - Field types: `Option<T>`
+//! - Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>`,
+//!   `Vec<T>` and `Option<T>`
+//! - Any field type that implementes the `NewBuildableValue` trait
 //!
 //! ## Example of usage
 //! ```

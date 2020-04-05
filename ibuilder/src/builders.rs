@@ -459,3 +459,134 @@ where
         ))
     }
 }
+
+/// Builder for the type `Option<T>`.
+pub struct OptionBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    value: Option<Box<dyn BuildableValue>>,
+    inner_type: PhantomData<T>,
+    prompt: String,
+}
+
+impl<T> std::fmt::Debug for OptionBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("OptionBuilder")
+            .field("value", &self.value)
+            .finish()
+    }
+}
+
+impl<T> NewBuildableValue for Option<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn new_buildable_value(config: BuildableValueConfig<()>) -> Box<dyn BuildableValue> {
+        Box::new(OptionBuilder::<T> {
+            value: None,
+            inner_type: Default::default(),
+            prompt: config
+                .prompt
+                .unwrap_or_else(|| "Choose an option".to_string()),
+        })
+    }
+}
+
+impl<T> BuildableValue for OptionBuilder<T>
+where
+    T: NewBuildableValue + 'static,
+{
+    fn apply(&mut self, data: &str, current_fields: &[String]) -> Result<(), ChooseError> {
+        if current_fields.is_empty() {
+            match data {
+                "__remove" => self.value = None,
+                "__edit" => {}
+                "__set" => self.value = Some(T::new_buildable_value(Default::default())),
+                _ => return Err(ChooseError::UnexpectedChoice),
+            }
+            Ok(())
+        } else {
+            let field = &current_fields[0];
+            let rest = &current_fields[1..];
+            if field == "__edit" || field == "__set" {
+                self.value.as_mut().unwrap().apply(data, rest)
+            } else {
+                unreachable!("Unexpected field: {}", field);
+            }
+        }
+    }
+
+    fn get_options(&self, current_fields: &[String]) -> Options {
+        if current_fields.is_empty() {
+            let choices = match self.value {
+                Some(_) => vec![
+                    Choice {
+                        choice_id: "__remove".to_string(),
+                        text: "Remove value".to_string(),
+                        needs_action: false,
+                    },
+                    Choice {
+                        choice_id: "__edit".to_string(),
+                        text: "Edit value".to_string(),
+                        needs_action: false,
+                    },
+                ],
+                None => vec![Choice {
+                    choice_id: "__set".to_string(),
+                    text: "Set value".to_string(),
+                    needs_action: false,
+                }],
+            };
+            Options {
+                query: self.prompt.clone(),
+                text_input: false,
+                choices,
+            }
+        } else {
+            let field = &current_fields[0];
+            let rest = &current_fields[1..];
+            if field == "__edit" || field == "__set" {
+                self.value.as_ref().unwrap().get_options(rest)
+            } else {
+                unreachable!("Unexpected field: {}", field);
+            }
+        }
+    }
+
+    fn get_subfields(&self, current_fields: &[String]) -> Vec<String> {
+        if current_fields.is_empty() {
+            match self.value {
+                Some(_) => vec!["__edit".to_string()],
+                None => vec!["__set".to_string()],
+            }
+        } else {
+            let field = &current_fields[0];
+            let rest = &current_fields[1..];
+            if field == "__edit" || field == "__set" {
+                self.value.as_ref().unwrap().get_subfields(rest)
+            } else {
+                unreachable!("Unexpected field: {}", field);
+            }
+        }
+    }
+
+    fn to_node(&self) -> Node {
+        match &self.value {
+            Some(inner) => inner.to_node(),
+            None => Node::Leaf(Field::String("None".into())),
+        }
+    }
+
+    fn get_value_any(&self) -> Option<Box<dyn Any>> {
+        match &self.value {
+            Some(inner) => Some(Box::new(Some(
+                *inner.get_value_any()?.downcast::<T>().unwrap(),
+            ))),
+            None => Some(Box::new(None::<T>)),
+        }
+    }
+}
