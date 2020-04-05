@@ -1,22 +1,23 @@
 error: unknown attribute
- --> $DIR/unknown_attribute2.rs:5:16
+ --> $DIR/unknown_attribute2.rs:3:16
   |
-5 |     #[ibuilder(wibble_monster)]
+3 |     #[ibuilder(wibble_monster)]
   |                ^^^^^^^^^^^^^^
 
-error[E0599]: no function or associated item named `builder` found for struct `Foo` in the current scope
-  --> $DIR/unknown_attribute2.rs:10:10
+error: unknown attribute
+ --> $DIR/unknown_attribute2.rs:8:12
+  |
+8 | #[ibuilder(wibble_monster)]
+  |            ^^^^^^^^^^^^^^
+
+error: unknown attribute
+  --> $DIR/unknown_attribute2.rs:14:12
    |
-4  | struct Foo {
-   | ---------- function or associated item `builder` not found for this
-...
-10 |     Foo::builder();
-   |          ^^^^^^^ function or associated item not found in `Foo`
+14 | #[ibuilder(wibble_monster)]
+   |            ^^^^^^^^^^^^^^
+
+error: unknown attribute
+  --> $DIR/unknown_attribute2.rs:21:16
    |
-   = note: the method `builder` exists but the following trait bounds were not satisfied:
-           `&Foo : ibuilder::Buildable<_>`
-           `&mut Foo : ibuilder::Buildable<_>`
-           `Foo : ibuilder::Buildable<_>`
-   = help: items from traits can only be used if the trait is implemented and in scope
-   = note: the following trait defines an item `builder`, perhaps you need to implement it:
-           candidate #1: `ibuilder::Buildable`
+21 |     #[ibuilder(wibble_monster)]
+   |                ^^^^^^^^^^^^^^
