@@ -136,7 +136,7 @@ where
     T: NewBuildableValue + 'static,
 {
     fn builder() -> Builder<T> {
-        Builder::<T>::from_buildable_value(T::new_buildable_value())
+        Builder::<T>::from_buildable_value(T::new_buildable_value(Default::default()))
     }
 }
 
@@ -166,8 +166,28 @@ pub trait BuildableValue: std::fmt::Debug {
 /// semantics of the generated builder must be compatible with this type, especially looking at the
 /// `get_value_any` method.
 pub trait NewBuildableValue {
-    /// Construct a new `BuildableValue`.
-    fn new_buildable_value() -> Box<dyn BuildableValue>;
+    /// Construct a new `BuildableValue` using the provided configuration. Note that using this
+    /// constructor instead of the `new` method of the actual builder opaques the inner type.
+    fn new_buildable_value(config: BuildableValueConfig<()>) -> Box<dyn BuildableValue>;
+}
+
+/// The configuration for customizing the aspect of a `BuildableValue` that produces a value of type
+/// `T`.
+pub struct BuildableValueConfig<T> {
+    /// The default value to use, if `None` there is no default value and the field must be
+    /// provided.
+    pub default: Option<T>,
+    /// The prompt message to show to the user, if `None` a default message is shown.
+    pub prompt: Option<String>,
+}
+
+impl<T> Default for BuildableValueConfig<T> {
+    fn default() -> Self {
+        Self {
+            default: None,
+            prompt: None,
+        }
+    }
 }
 
 impl<T: 'static> Builder<T> {

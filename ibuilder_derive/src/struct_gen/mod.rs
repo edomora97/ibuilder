@@ -2,7 +2,7 @@ use proc_macro_error::{abort, ResultExt};
 use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Attribute, Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
+use syn::{Attribute, Field, Fields, Ident, Lit, Meta, MetaNameValue, Token, Type};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
@@ -26,6 +26,15 @@ pub struct StructGenerator {
     span: Span,
     /// Whether the fields of this struct are named.
     named_fields: bool,
+    /// The metadata associated with the struct.
+    metadata: StructMetadata,
+}
+
+/// The metadata of the struct, it's taken from the attributes of the `struct`.
+#[derive(Debug)]
+pub struct StructMetadata {
+    /// The prompt to use for this struct's main menu.
+    prompt: Option<String>,
 }
 
 /// The information about a field of a struct.
@@ -47,7 +56,9 @@ pub struct FieldMetadata {
     /// The default value for this field. Only available if the field type is a builtin type. It is
     /// None if the default value is not specified, otherwise it's
     /// `Some( quote!{ Some(value.into()) })`.
-    default: Option<TokenStream2>,
+    pub default: Option<TokenStream2>,
+    /// The prompt to use for this field.
+    pub prompt: Option<String>,
 }
 
 /// Generator for the list of field definition of a struct. It will generate either:
@@ -90,6 +101,7 @@ impl StructGenerator {
                     Fields::Named(_) => true,
                     _ => false,
                 };
+                let metadata = StructMetadata::from(ast);
                 StructGenerator {
                     ident: ast.ident.clone(),
                     builder_ident: StructGenerator::gen_builder_ident(&ast.ident),
@@ -98,12 +110,24 @@ impl StructGenerator {
                             fields.named.iter().map(StructField::from).collect()
                         }
                         syn::Fields::Unnamed(fields) => {
-                            fields.unnamed.iter().map(StructField::from).collect()
+                            let mut fields: Vec<_> =
+                                fields.unnamed.iter().map(StructField::from).collect();
+                            // forward the prompt to the unnamed fields to avoid having to add the
+                            // attribute for the field (i.e. inside the parenthesis).
+                            if let Some(prompt) = &metadata.prompt {
+                                for field in fields.iter_mut() {
+                                    if field.metadata.prompt.is_none() {
+                                        field.metadata.prompt = Some(prompt.clone());
+                                    }
+                                }
+                            }
+                            fields
                         }
                         syn::Fields::Unit => vec![],
                     },
                     span: ast.span(),
                     named_fields,
+                    metadata,
                 }
             }
             _ => panic!("expecting a struct"),
@@ -134,6 +158,45 @@ impl StructGenerator {
     }
 }
 
+impl From<&syn::DeriveInput> for StructMetadata {
+    fn from(data: &syn::DeriveInput) -> StructMetadata {
+        let mut metadata = StructMetadata { prompt: None };
+        for attr in &data.attrs {
+            if attr.path.is_ident("ibuilder") {
+                let meta = attr
+                    .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                    .unwrap_or_abort();
+                for meta in meta {
+                    parse_struct_meta(meta, &mut metadata);
+                }
+            }
+        }
+        metadata
+    }
+}
+
+/// Extract the `StructMetadata` from a `Meta` entry in an attribute. `meta` comes from
+/// `#[ibuilder(HERE)]`.
+fn parse_struct_meta(meta: Meta, metadata: &mut StructMetadata) {
+    match meta {
+        Meta::NameValue(MetaNameValue { path, lit, .. }) => {
+            if path.is_ident("prompt") {
+                if metadata.prompt.is_none() {
+                    match lit {
+                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
+                        _ => abort!(lit, "the prompt should be a string"),
+                    }
+                } else {
+                    abort!(path, "duplicated prompt");
+                }
+            } else {
+                abort!(path, "unknown attribute");
+            }
+        }
+        _ => abort!(meta, "unknown attribute"),
+    }
+}
+
 impl StructField {
     /// The type of the builder for the type of this field. It's either one of the builtin types or
     /// a generic boxed one.
@@ -148,16 +211,30 @@ impl StructField {
     /// The initializer of the builder for the current field. It will forward the `FieldMetadata`
     /// to the builder.
     fn builder_new(&self) -> TokenStream2 {
+        let prompt = match &self.metadata.prompt {
+            Some(prompt) => quote!(Some(#prompt.to_string())),
+            None => quote! {None},
+        };
         if let Some(builtin) = self.builtin_type() {
             let default = self
                 .metadata
                 .default
                 .clone()
                 .unwrap_or_else(|| quote! {None});
-            quote! { <#builtin>::new(#default) }
+            quote! {
+                <#builtin>::new(ibuilder::BuildableValueConfig {
+                    default: #default,
+                    prompt: #prompt,
+                })
+            }
         } else {
             let ty = &self.ty;
-            quote! { <#ty as ibuilder::NewBuildableValue>::new_buildable_value() }
+            quote! {
+                <#ty as ibuilder::NewBuildableValue>::new_buildable_value(ibuilder::BuildableValueConfig {
+                    default: None,
+                    prompt: #prompt,
+                })
+            }
         }
     }
 
@@ -212,8 +289,10 @@ impl<'s> ToTokens for FieldDefList<'s> {
             inner.append_all(quote! {#ty,})
         }
         if self.named {
+            inner.append_all(quote! { __prompt: String, });
             tokens.append_all(quote! { { #inner } });
         } else {
+            // unnamed struct has the prompt directly forwarded to the inner type
             tokens.append_all(quote! { ( #inner ); });
         }
     }
@@ -225,6 +304,9 @@ impl<'s> ToTokens for FieldNewList<'s> {
             tokens.append_all(quote! {});
             return;
         }
+        let prompt = &self.gen.metadata.prompt.as_deref();
+        let prompt = prompt.unwrap_or("Select the field to edit");
+        let prompt = quote! { config.prompt.unwrap_or_else(|| #prompt.to_string()) };
         let mut inner = TokenStream2::new();
         for field in &self.gen.fields {
             // named field: prepend the field name
@@ -235,6 +317,7 @@ impl<'s> ToTokens for FieldNewList<'s> {
             inner.append_all(quote! {#init,})
         }
         if self.gen.is_named() {
+            inner.append_all(quote! { __prompt: #prompt, });
             tokens.append_all(quote! { { #inner } });
         } else {
             tokens.append_all(quote! { ( #inner ) });
@@ -259,7 +342,10 @@ impl From<&Field> for StructField {
 
 /// Extract the `FieldMetadata` from the attribute list of a field.
 fn get_field_metadata(attrs: &[Attribute]) -> FieldMetadata {
-    let mut metadata = FieldMetadata { default: None };
+    let mut metadata = FieldMetadata {
+        default: None,
+        prompt: None,
+    };
     for attr in attrs {
         if attr.path.is_ident("ibuilder") {
             let meta = attr
@@ -284,6 +370,15 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
                 } else {
                     abort!(path, "duplicated default");
                 }
+            } else if path.is_ident("prompt") {
+                if metadata.prompt.is_none() {
+                    match lit {
+                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
+                        _ => abort!(lit, "the prompt should be a string"),
+                    }
+                } else {
+                    abort!(path, "duplicated prompt");
+                }
             } else {
                 abort!(path, "unknown attribute");
             }
@@ -307,7 +402,7 @@ fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
 
         #[automatically_derived]
         impl #builder_ident {
-            fn new() -> #builder_ident {
+            fn new(config: ibuilder::BuildableValueConfig<()>) -> #builder_ident {
                 #builder_ident #fields_new
             }
         }
@@ -321,8 +416,8 @@ fn gen_impl_new_buildable_value(gen: &StructGenerator) -> TokenStream2 {
     quote! {
         #[automatically_derived]
         impl ibuilder::NewBuildableValue for #ident {
-            fn new_buildable_value() -> Box<dyn ibuilder::BuildableValue> {
-                Box::new(#builder_ident::new())
+            fn new_buildable_value(config: ibuilder::BuildableValueConfig<()>) -> Box<dyn ibuilder::BuildableValue> {
+                Box::new(#builder_ident::new(config))
             }
         }
     }

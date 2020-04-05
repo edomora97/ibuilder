@@ -73,7 +73,7 @@ fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream2 {
     quote! {
         match data {
             #(#select_menu,)*
-            _ => return Err(ChooseError::UnexpectedChoice),
+            _ => return Err(ibuilder::ChooseError::UnexpectedChoice),
         }
     }
 }
@@ -155,13 +155,8 @@ fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
         })
         .collect();
     quote! {
-        let query = if self.value.is_none() {
-            "Select a variant".to_string()
-        } else {
-            "Change or edit a variant".to_string()
-        };
         ibuilder::Options {
-            query,
+            query: self.prompt.clone(),
             text_input: false,
             choices: vec![ #(#choices,)* ],
         }

@@ -1,6 +1,7 @@
-use proc_macro_error::abort;
+use proc_macro_error::{abort, ResultExt};
 use syn::export::TokenStream2;
-use syn::{Fields, Ident, Variant};
+use syn::punctuated::Punctuated;
+use syn::{Fields, Ident, Lit, Meta, MetaNameValue, Token, Variant};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
@@ -22,6 +23,15 @@ pub struct EnumGenerator {
     variants_builder_ident: Ident,
     /// The list of the variants of the original enum.
     variants: Vec<EnumVariant>,
+    /// The metadata associated with the enum.
+    metadata: EnumMetadata,
+}
+
+/// The metadata of the enum, it's taken from the attributes of the `enum`.
+#[derive(Debug)]
+pub struct EnumMetadata {
+    /// The prompt to use for this enum's main menu.
+    prompt: Option<String>,
 }
 
 /// The information about a variant of an enum.
@@ -31,6 +41,15 @@ pub struct EnumVariant {
     ident: Ident,
     /// The kind of the variant.
     kind: VariantKind,
+    /// The metadata associated with the variant.
+    metadata: VariantMetadata,
+}
+
+/// The metadata of the variant, it's taken from the attributes of the `Variant`.
+#[derive(Debug)]
+pub struct VariantMetadata {
+    /// The prompt to use for this variant.
+    prompt: Option<String>,
 }
 
 /// The information about the type of variant.
@@ -60,6 +79,7 @@ impl EnumGenerator {
                 builder_ident: gen_builder_ident(&ast.ident),
                 variants_builder_ident: gen_variants_builder_ident(&ast.ident),
                 variants: data.variants.iter().map(EnumVariant::from).collect(),
+                metadata: EnumMetadata::from(ast),
             },
             _ => panic!("expecting an enum"),
         }
@@ -93,9 +113,15 @@ impl EnumVariant {
                 quote! { { #(#fields,)* } }
             }
         };
+        let attrs = if let Some(prompt) = &self.metadata.prompt {
+            quote! { #[ibuilder(prompt = #prompt)] }
+        } else {
+            TokenStream2::new()
+        };
         quote! {
             #[allow(non_camel_case_types)]
-            #[derive(ibuilder)]
+            #[derive(ibuilder::ibuilder)]
+            #attrs
             struct #ident #fields_def
         }
     }
@@ -109,7 +135,16 @@ impl EnumVariant {
         match &self.kind {
             VariantKind::Empty => quote! { #builder::#variant },
             VariantKind::Unnamed(_) | VariantKind::Named(_) => {
-                quote! { #builder::#variant(#variant_builder::new()) }
+                let prompt = match &self.metadata.prompt {
+                    Some(prompt) => quote! {Some(#prompt.into())},
+                    None => quote! {None},
+                };
+                quote! {
+                    #builder::#variant(#variant_builder::new(ibuilder::BuildableValueConfig {
+                        default: None,
+                        prompt: #prompt,
+                    }))
+                }
             }
         }
     }
@@ -120,6 +155,45 @@ impl EnumVariant {
             VariantKind::Unnamed(_) | VariantKind::Empty => vec![],
             VariantKind::Named(fields) => fields.iter().map(|f| f.ident.clone().unwrap()).collect(),
         }
+    }
+}
+
+impl From<&syn::DeriveInput> for EnumMetadata {
+    fn from(data: &syn::DeriveInput) -> EnumMetadata {
+        let mut metadata = EnumMetadata { prompt: None };
+        for attr in &data.attrs {
+            if attr.path.is_ident("ibuilder") {
+                let meta = attr
+                    .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                    .unwrap_or_abort();
+                for meta in meta {
+                    parse_enum_meta(meta, &mut metadata);
+                }
+            }
+        }
+        metadata
+    }
+}
+
+/// Extract the `EnumMetadata` from a `Meta` entry in an attribute. `meta` comes from
+/// `#[ibuilder(HERE)]`.
+fn parse_enum_meta(meta: Meta, metadata: &mut EnumMetadata) {
+    match meta {
+        Meta::NameValue(MetaNameValue { path, lit, .. }) => {
+            if path.is_ident("prompt") {
+                if metadata.prompt.is_none() {
+                    match lit {
+                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
+                        _ => abort!(lit, "the prompt should be a string"),
+                    }
+                } else {
+                    abort!(path, "duplicated prompt");
+                }
+            } else {
+                abort!(path, "unknown attribute");
+            }
+        }
+        _ => abort!(meta, "unknown attribute"),
     }
 }
 
@@ -135,6 +209,7 @@ impl VariantKind {
 
 impl From<&Variant> for EnumVariant {
     fn from(variant: &Variant) -> EnumVariant {
+        let metadata = VariantMetadata::from(variant);
         EnumVariant {
             ident: variant.ident.clone(),
             kind: match &variant.fields {
@@ -142,11 +217,66 @@ impl From<&Variant> for EnumVariant {
                     VariantKind::Named(fields.named.iter().map(StructField::from).collect())
                 }
                 Fields::Unnamed(fields) => {
-                    VariantKind::Unnamed(fields.unnamed.iter().map(StructField::from).collect())
+                    let mut fields: Vec<_> = fields.unnamed.iter().map(StructField::from).collect();
+                    // forward the prompt to the unnamed fields to avoid having to add the attribute
+                    // for the field (i.e. inside the parenthesis).
+                    if let Some(prompt) = &metadata.prompt {
+                        for field in fields.iter_mut() {
+                            if field.metadata.prompt.is_none() {
+                                field.metadata.prompt = Some(prompt.clone());
+                            }
+                        }
+                    }
+                    VariantKind::Unnamed(fields)
                 }
-                Fields::Unit => VariantKind::Empty,
+                Fields::Unit => {
+                    if metadata.prompt.is_some() {
+                        abort!(variant, "prompt not supported for empty variants");
+                    }
+                    VariantKind::Empty
+                }
             },
+            metadata,
         }
+    }
+}
+
+impl From<&Variant> for VariantMetadata {
+    fn from(var: &Variant) -> Self {
+        let mut metadata = VariantMetadata { prompt: None };
+        for attr in &var.attrs {
+            if attr.path.is_ident("ibuilder") {
+                let meta = attr
+                    .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                    .unwrap_or_abort();
+                for meta in meta {
+                    parse_variant_meta(meta, &mut metadata);
+                }
+            }
+        }
+        metadata
+    }
+}
+
+/// Extract the `VariantMetadata` from a `Meta` entry in a variant attribute. `meta` comes from
+/// `#[ibuilder(HERE)]`.
+fn parse_variant_meta(meta: Meta, metadata: &mut VariantMetadata) {
+    match meta {
+        Meta::NameValue(MetaNameValue { path, lit, .. }) => {
+            if path.is_ident("prompt") {
+                if metadata.prompt.is_none() {
+                    match lit {
+                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
+                        _ => abort!(lit, "the prompt should be a string"),
+                    }
+                } else {
+                    abort!(path, "duplicated prompt");
+                }
+            } else {
+                abort!(path, "unknown attribute");
+            }
+        }
+        _ => abort!(meta, "unknown attribute"),
     }
 }
 
@@ -208,6 +338,11 @@ impl ToTokens for VariantsDefList<'_> {
 fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
     let builder_ident = &gen.builder_ident;
     let variants_builder_ident = &gen.variants_builder_ident;
+    let prompt = if let Some(prompt) = &gen.metadata.prompt {
+        prompt
+    } else {
+        "Select a variant"
+    };
     quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
@@ -215,12 +350,16 @@ fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
         #[derive(Debug)]
         struct #builder_ident {
             value: Option<#variants_builder_ident>,
+            prompt: String,
         }
 
         #[automatically_derived]
         impl #builder_ident {
-            fn new() -> #builder_ident {
-                #builder_ident { value: None }
+            fn new(config: ibuilder::BuildableValueConfig<()>) -> #builder_ident {
+                #builder_ident {
+                    value: None,
+                    prompt: config.prompt.unwrap_or_else(|| #prompt.to_string())
+                }
             }
         }
     }
@@ -248,8 +387,8 @@ fn gen_impl_new_buildable_value(gen: &EnumGenerator) -> TokenStream2 {
     quote! {
         #[automatically_derived]
         impl ibuilder::NewBuildableValue for #ident {
-            fn new_buildable_value() -> Box<dyn ibuilder::BuildableValue> {
-                Box::new(#builder_ident::new())
+            fn new_buildable_value(config: ibuilder::BuildableValueConfig<()>) -> Box<dyn ibuilder::BuildableValue> {
+                Box::new(#builder_ident::new(config))
             }
         }
     }

@@ -72,7 +72,7 @@ impl<'s> StructWithNamedFields<'s> {
             fn get_options(&self, current_fields: &[String]) -> ibuilder::Options {
                 if current_fields.is_empty() {
                     ibuilder::Options {
-                        query: "Select the field to edit".to_string(),
+                        query: self.__prompt.clone(),
                         text_input: false,
                         choices: vec![
                             #(

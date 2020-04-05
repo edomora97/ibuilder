@@ -5,7 +5,9 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 
 use crate::nodes::{Field, FieldKind, Node};
-use crate::{BuildableValue, Choice, ChooseError, NewBuildableValue, Options};
+use crate::{
+    BuildableValue, BuildableValueConfig, Choice, ChooseError, NewBuildableValue, Options,
+};
 
 macro_rules! type_builder_boilerplate {
     () => {
@@ -24,22 +26,25 @@ macro_rules! type_builder_boilerplate {
 }
 
 macro_rules! type_builder_struct {
-    ($base:ty, $name:ident) => {
-        type_builder_struct!($base, $name, concat!("Builder for the type `", stringify!($base), "`"));
+    ($base:ty, $name:ident, $query:expr) => {
+        type_builder_struct!($base, $name, $query, concat!("Builder for the type `", stringify!($base), "`"));
     };
-    ($base:ty, $name:ident, $docstring:expr) => {
+    ($base:ty, $name:ident, $query:expr, $docstring:expr) => {
         #[doc = $docstring]
         #[derive(Debug)]
         pub struct $name {
             /// The current value.
             pub value: Option<$base>,
+            /// The message to show to the user.
+            pub prompt: String,
         }
 
         impl $name {
             /// Make a new instance of the builder.
-            pub fn new(default: Option<$base>) -> Self {
+            pub fn new(config: BuildableValueConfig<$base>) -> Self {
                 Self {
-                    value: default.clone(),
+                    value: config.default,
+                    prompt: config.prompt.unwrap_or_else(|| $query.to_string()),
                 }
             }
         }
@@ -56,7 +61,7 @@ macro_rules! type_builder {
         );
     };
     ($base:ty, $name:ident, $query:expr, $docstring:expr) => {
-        type_builder_struct!($base, $name, $docstring);
+        type_builder_struct!($base, $name, $query, $docstring);
 
         impl BuildableValue for $name {
             type_builder_boilerplate!();
@@ -87,7 +92,7 @@ macro_rules! type_builder {
                     );
                 }
                 Options {
-                    query: ($query).to_string(),
+                    query: self.prompt.clone(),
                     text_input: true,
                     choices: vec![],
                 }
@@ -99,8 +104,11 @@ macro_rules! type_builder {
         }
 
         impl NewBuildableValue for $base {
-            fn new_buildable_value() -> Box<dyn BuildableValue> {
-                Box::new($name::new(None))
+            fn new_buildable_value(config: BuildableValueConfig<()>) -> Box<dyn BuildableValue> {
+                Box::new($name::new(BuildableValueConfig {
+                    default: None,
+                    prompt: config.prompt,
+                }))
             }
         }
     };
@@ -121,7 +129,7 @@ type_builder!(f64, F64Builder, "Type an integer");
 type_builder!(String, StringBuilder, "Type a string");
 type_builder!(char, CharBuilder, "Type a char");
 
-type_builder_struct!(bool, BoolBuilder);
+type_builder_struct!(bool, BoolBuilder, "True or false?");
 
 impl BuildableValue for BoolBuilder {
     type_builder_boilerplate!();
@@ -149,7 +157,7 @@ impl BuildableValue for BoolBuilder {
             );
         }
         Options {
-            query: "Insert either true or false".to_string(),
+            query: self.prompt.clone(),
             text_input: false,
             choices: vec![
                 Choice {
@@ -210,6 +218,7 @@ where
 {
     items: Vec<Box<dyn BuildableValue>>,
     inner_type: PhantomData<T>,
+    prompt: String,
 }
 
 impl<T> std::fmt::Debug for VecBuilder<T>
@@ -227,10 +236,13 @@ impl<T> NewBuildableValue for Vec<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn new_buildable_value() -> Box<dyn BuildableValue> {
+    fn new_buildable_value(config: BuildableValueConfig<()>) -> Box<dyn BuildableValue> {
         Box::new(VecBuilder::<T> {
             items: Vec::new(),
             inner_type: Default::default(),
+            prompt: config
+                .prompt
+                .unwrap_or_else(|| "Select an action".to_string()),
         })
     }
 }
@@ -243,7 +255,7 @@ where
         // vec main menu
         if current_fields.is_empty() {
             if data == "__new" {
-                self.items.push(T::new_buildable_value());
+                self.items.push(T::new_buildable_value(Default::default()));
             }
         // remove item or apply to element
         } else {
@@ -297,7 +309,7 @@ where
                 }
             }
             Options {
-                query: "Vec menu".to_string(),
+                query: self.prompt.clone(),
                 text_input: false,
                 choices,
             }
@@ -413,9 +425,9 @@ impl<T> NewBuildableValue for Box<T>
 where
     T: NewBuildableValue + 'static,
 {
-    fn new_buildable_value() -> Box<dyn BuildableValue> {
+    fn new_buildable_value(config: BuildableValueConfig<()>) -> Box<dyn BuildableValue> {
         Box::new(BoxBuilder::<T> {
-            value: T::new_buildable_value(),
+            value: T::new_buildable_value(config),
             inner_type: Default::default(),
         })
     }
