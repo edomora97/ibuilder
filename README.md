@@ -13,14 +13,14 @@ and text inputs. After each choice the internal state of the builder changes.
 The builder provides the user with interactive menu-like interfaces, keeping the UI abstract
 and rust type-safeness.
 
-The API of this crate is very simple, you start with a struct derived from `ibuilder` and call
+The API of this crate is very simple, you start with a struct derived from `IBuilder` and call
 the auto-generated function `builder()` from the `Buildable` trait. This will construct a new
 custom-built `Builder` to use for the communication. The `Builder` provides two main functions:
 `get_options()` for getting the current state of the builder and the list of possible options
 the user can choose, and `choose(input)` that validates and inserts the choice of the user.
 
 ### Rationale
-When building an interactive application (e.g. a Telegram Bot, a Console application) which
+When building an interactive application (e.g. a Telegram Bot or a console application) which
 needs loads of configurations it can be pretty hard to come out with a decent interface without
 writing loads of code for handling all the corner cases.
 
@@ -33,6 +33,7 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 ### Supported features
 - Deriving any struct with named fields (or with one unnamed field like `struct Foo(i64)`)
 - Default values for the fields
+- Custom message prompt for fields, structs, enums and variants
 - Nested structures (i.e. custom types)
 - Enums (also with variants with field, but only one if unnamed)
 - Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and
