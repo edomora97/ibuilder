@@ -133,6 +133,7 @@ fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
         .iter()
         .map(|var| {
             let ident = &var.ident;
+            let name = var.actual_name();
             let needs_action = match &var.kind {
                 // empty variants never need actions
                 VariantKind::Empty => quote! { false },
@@ -148,7 +149,7 @@ fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
             quote! {
                 ibuilder::Choice {
                     choice_id: stringify!(#ident).to_string(),
-                    text: stringify!(#ident).to_string(),
+                    text: #name.to_string(),
                     needs_action: #needs_action,
                 }
             }
@@ -230,10 +231,11 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
         .iter()
         .map(|var| {
             let ident = &var.ident;
+            let name = var.actual_name();
             match &var.kind {
                 VariantKind::Empty => quote! {
                     Some(#builder::#ident) => {
-                        ibuilder::nodes::Node::Leaf(ibuilder::nodes::Field::String(stringify!(#ident).to_string()))
+                        ibuilder::nodes::Node::Leaf(ibuilder::nodes::Field::String(#name.to_string()))
                     }
                 },
                 VariantKind::Named(_) => quote! {
@@ -243,14 +245,11 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
                             ibuilder::nodes::Node::Composite(_, fields) => fields,
                             _ => unreachable!("Invalid node of enum content"),
                         };
-                        ibuilder::nodes::Node::Composite("Var2".to_string(), fields)
+                        ibuilder::nodes::Node::Composite(#name.to_string(), fields)
                     }
                 },
                 VariantKind::Unnamed(_) => quote! {
-                    Some(#builder::#ident(inner)) => ibuilder::nodes::Node::Composite(
-                        stringify!(#ident).to_string(),
-                        vec![ibuilder::nodes::FieldKind::Unnamed(inner.to_node())],
-                    )
+                    Some(#builder::#ident(inner)) => inner.to_node()
                 },
             }
         })

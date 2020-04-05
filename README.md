@@ -34,6 +34,7 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
 - Deriving any struct with named fields (or with one unnamed field like `struct Foo(i64)`)
 - Default values for the fields
 - Custom message prompt for fields, structs, enums and variants
+- Renaming fields, structs and variants for better looking options
 - Nested structures (i.e. custom types)
 - Enums (also with variants with field, but only one if unnamed)
 - Supported field types: all numeric types from rust, `bool`, `String`, `char`, `Box<T>` and

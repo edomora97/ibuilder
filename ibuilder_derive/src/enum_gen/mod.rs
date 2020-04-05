@@ -1,11 +1,12 @@
 use proc_macro_error::{abort, ResultExt};
 use syn::export::TokenStream2;
 use syn::punctuated::Punctuated;
-use syn::{Fields, Ident, Lit, Meta, MetaNameValue, Token, Variant};
+use syn::{Fields, Ident, Meta, MetaNameValue, Token, Variant};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
 use crate::enum_gen::enum_buildable_value_gen::gen_impl_buildable_value;
+use crate::parse_string_meta;
 use crate::struct_gen::{StructField, StructGenerator};
 
 mod enum_buildable_value_gen;
@@ -50,6 +51,8 @@ pub struct EnumVariant {
 pub struct VariantMetadata {
     /// The prompt to use for this variant.
     prompt: Option<String>,
+    /// Different name to use in the tree structure.
+    rename: Option<String>,
 }
 
 /// The information about the type of variant.
@@ -94,8 +97,14 @@ impl EnumGenerator {
 impl EnumVariant {
     /// Generate (or not in case of empty variants) a structure that contains the internal state
     /// of a variant. This struct will have the same fields as the variant, and derives from
-    /// `ibuilder`.
+    /// `IBuilder`.
     fn gen_builder(&self, ident: Ident) -> TokenStream2 {
+        let name = self.actual_name();
+        let mut attrs = Vec::new();
+        if let Some(prompt) = &self.metadata.prompt {
+            attrs.push(quote! { prompt = #prompt });
+        }
+        attrs.push(quote! { rename = #name });
         let fields_def = match &self.kind {
             VariantKind::Empty => return TokenStream2::new(),
             VariantKind::Unnamed(fields) => {
@@ -113,15 +122,10 @@ impl EnumVariant {
                 quote! { { #(#fields,)* } }
             }
         };
-        let attrs = if let Some(prompt) = &self.metadata.prompt {
-            quote! { #[ibuilder(prompt = #prompt)] }
-        } else {
-            TokenStream2::new()
-        };
         quote! {
             #[allow(non_camel_case_types)]
             #[derive(IBuilder)]
-            #attrs
+            #[ibuilder(#(#attrs,)*)]
             struct #ident #fields_def
         }
     }
@@ -156,6 +160,17 @@ impl EnumVariant {
             VariantKind::Named(fields) => fields.iter().map(|f| f.ident.clone().unwrap()).collect(),
         }
     }
+
+    /// Return the actual name of the variant, which is the defined name or the renamed one. The
+    /// string literal of the name is returned.
+    fn actual_name(&self) -> TokenStream2 {
+        if let Some(renamed) = &self.metadata.rename {
+            quote! { #renamed }
+        } else {
+            let ident = self.ident.to_string();
+            quote! { #ident }
+        }
+    }
 }
 
 impl From<&syn::DeriveInput> for EnumMetadata {
@@ -181,14 +196,12 @@ fn parse_enum_meta(meta: Meta, metadata: &mut EnumMetadata) {
     match meta {
         Meta::NameValue(MetaNameValue { path, lit, .. }) => {
             if path.is_ident("prompt") {
-                if metadata.prompt.is_none() {
-                    match lit {
-                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
-                        _ => abort!(lit, "the prompt should be a string"),
-                    }
-                } else {
-                    abort!(path, "duplicated prompt");
-                }
+                parse_string_meta(&mut metadata.prompt, lit);
+            } else if path.is_ident("rename") {
+                abort!(
+                    path,
+                    "renaming an enum is not supported since the name is not exposed"
+                );
             } else {
                 abort!(path, "unknown attribute");
             }
@@ -243,7 +256,10 @@ impl From<&Variant> for EnumVariant {
 
 impl From<&Variant> for VariantMetadata {
     fn from(var: &Variant) -> Self {
-        let mut metadata = VariantMetadata { prompt: None };
+        let mut metadata = VariantMetadata {
+            prompt: None,
+            rename: None,
+        };
         for attr in &var.attrs {
             if attr.path.is_ident("ibuilder") {
                 let meta = attr
@@ -264,14 +280,9 @@ fn parse_variant_meta(meta: Meta, metadata: &mut VariantMetadata) {
     match meta {
         Meta::NameValue(MetaNameValue { path, lit, .. }) => {
             if path.is_ident("prompt") {
-                if metadata.prompt.is_none() {
-                    match lit {
-                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
-                        _ => abort!(lit, "the prompt should be a string"),
-                    }
-                } else {
-                    abort!(path, "duplicated prompt");
-                }
+                parse_string_meta(&mut metadata.prompt, lit);
+            } else if path.is_ident("rename") {
+                parse_string_meta(&mut metadata.rename, lit);
             } else {
                 abort!(path, "unknown attribute");
             }

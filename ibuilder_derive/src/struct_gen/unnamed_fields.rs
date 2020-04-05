@@ -68,11 +68,11 @@ impl<'s> StructWithUnnamedFields<'s> {
 
     /// Generate the implementation of the `to_node` method.
     fn gen_fn_to_node(&self) -> TokenStream2 {
-        let ident = &self.gen.ident;
+        let name = self.gen.actual_name();
         quote! {
             fn to_node(&self) -> ibuilder::nodes::Node {
                 ibuilder::nodes::Node::Composite(
-                    stringify!(#ident).to_string(),
+                    #name.to_string(),
                     vec![ibuilder::nodes::FieldKind::Unnamed(self.0.to_node())],
                 )
             }

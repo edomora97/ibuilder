@@ -1,0 +1,5 @@
+error: renaming an enum is not supported since the name is not exposed
+ --> $DIR/rename_enum.rs:4:12
+  |
+4 | #[ibuilder(rename = "it doesn't make sense since this name is not shown")]
+  |            ^^^^^^

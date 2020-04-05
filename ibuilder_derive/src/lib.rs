@@ -57,3 +57,16 @@ fn ibuilder_macro(ast: &syn::DeriveInput) -> TokenStream {
         _ => abort!(ast, "only structs can derive ibuilder"),
     }
 }
+
+/// Parse the string attribute into the `Option<String>`. In case of duplicate or not string a
+/// compile error is raised.
+fn parse_string_meta(out: &mut Option<String>, lit: syn::Lit) {
+    if out.is_none() {
+        match lit {
+            syn::Lit::Str(content) => *out = Some(content.value()),
+            _ => abort!(lit, "expecting a string"),
+        }
+    } else {
+        abort!(lit, "duplicated attribute");
+    }
+}

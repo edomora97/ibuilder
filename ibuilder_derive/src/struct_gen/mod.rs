@@ -2,10 +2,11 @@ use proc_macro_error::{abort, ResultExt};
 use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Attribute, Field, Fields, Ident, Lit, Meta, MetaNameValue, Token, Type};
+use syn::{Attribute, Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
 
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
+use crate::parse_string_meta;
 use crate::struct_gen::struct_buildable_value_gen::gen_impl_buildable_value;
 
 mod named_fields;
@@ -35,6 +36,8 @@ pub struct StructGenerator {
 pub struct StructMetadata {
     /// The prompt to use for this struct's main menu.
     prompt: Option<String>,
+    /// Different name to use in the tree structure.
+    rename: Option<String>,
 }
 
 /// The information about a field of a struct.
@@ -59,6 +62,8 @@ pub struct FieldMetadata {
     pub default: Option<TokenStream2>,
     /// The prompt to use for this field.
     pub prompt: Option<String>,
+    /// Different name to use in the tree structure.
+    pub rename: Option<String>,
 }
 
 /// Generator for the list of field definition of a struct. It will generate either:
@@ -134,6 +139,17 @@ impl StructGenerator {
         }
     }
 
+    /// Return the actual name of the struct, which is the defined name or the renamed one. The
+    /// string literal of the name is returned.
+    fn actual_name(&self) -> TokenStream2 {
+        if let Some(renamed) = &self.metadata.rename {
+            quote! { #renamed }
+        } else {
+            let ident = self.ident.to_string();
+            quote! { #ident }
+        }
+    }
+
     /// Whether the fields of the original struct are named or unnamed (`struct Foo(i64)`).
     fn is_named(&self) -> bool {
         self.named_fields
@@ -160,7 +176,10 @@ impl StructGenerator {
 
 impl From<&syn::DeriveInput> for StructMetadata {
     fn from(data: &syn::DeriveInput) -> StructMetadata {
-        let mut metadata = StructMetadata { prompt: None };
+        let mut metadata = StructMetadata {
+            prompt: None,
+            rename: None,
+        };
         for attr in &data.attrs {
             if attr.path.is_ident("ibuilder") {
                 let meta = attr
@@ -181,14 +200,9 @@ fn parse_struct_meta(meta: Meta, metadata: &mut StructMetadata) {
     match meta {
         Meta::NameValue(MetaNameValue { path, lit, .. }) => {
             if path.is_ident("prompt") {
-                if metadata.prompt.is_none() {
-                    match lit {
-                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
-                        _ => abort!(lit, "the prompt should be a string"),
-                    }
-                } else {
-                    abort!(path, "duplicated prompt");
-                }
+                parse_string_meta(&mut metadata.prompt, lit);
+            } else if path.is_ident("rename") {
+                parse_string_meta(&mut metadata.rename, lit);
             } else {
                 abort!(path, "unknown attribute");
             }
@@ -260,6 +274,17 @@ impl StructField {
                 }
             }
             _ => None,
+        }
+    }
+
+    /// Return the actual name of the field, which is the defined name or the renamed one. The
+    /// string literal of the name is returned.
+    fn actual_name(&self) -> TokenStream2 {
+        if let Some(renamed) = &self.metadata.rename {
+            quote! { #renamed }
+        } else {
+            let ident = self.ident.as_ref().unwrap().to_string();
+            quote! { #ident }
         }
     }
 }
@@ -345,6 +370,7 @@ fn get_field_metadata(attrs: &[Attribute]) -> FieldMetadata {
     let mut metadata = FieldMetadata {
         default: None,
         prompt: None,
+        rename: None,
     };
     for attr in attrs {
         if attr.path.is_ident("ibuilder") {
@@ -371,14 +397,9 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
                     abort!(path, "duplicated default");
                 }
             } else if path.is_ident("prompt") {
-                if metadata.prompt.is_none() {
-                    match lit {
-                        Lit::Str(prompt) => metadata.prompt = Some(prompt.value()),
-                        _ => abort!(lit, "the prompt should be a string"),
-                    }
-                } else {
-                    abort!(path, "duplicated prompt");
-                }
+                parse_string_meta(&mut metadata.prompt, lit);
+            } else if path.is_ident("rename") {
+                parse_string_meta(&mut metadata.rename, lit);
             } else {
                 abort!(path, "unknown attribute");
             }

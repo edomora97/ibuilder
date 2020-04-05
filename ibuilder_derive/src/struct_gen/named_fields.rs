@@ -68,21 +68,24 @@ impl<'s> StructWithNamedFields<'s> {
     /// Generate the implementation of the `get_options` method.
     fn gen_fn_get_options(&self) -> TokenStream2 {
         let field_names = &self.fields;
+        let choices = self.gen.fields.iter().map(|f| {
+            let ident = f.ident.as_ref().unwrap();
+            let name = f.actual_name();
+            quote! {
+                ibuilder::Choice {
+                    choice_id: stringify!(#ident).to_string(),
+                    text: "Edit ".to_string() + #name,
+                    needs_action: self.#ident.get_value_any().is_none(),
+                }
+            }
+        });
         quote! {
             fn get_options(&self, current_fields: &[String]) -> ibuilder::Options {
                 if current_fields.is_empty() {
                     ibuilder::Options {
                         query: self.__prompt.clone(),
                         text_input: false,
-                        choices: vec![
-                            #(
-                                ibuilder::Choice {
-                                    choice_id: stringify!(#field_names).to_string(),
-                                    text: "Edit ".to_string() + stringify!(#field_names),
-                                    needs_action: self.#field_names.get_value_any().is_none(),
-                                }
-                            ),*
-                        ],
+                        choices: vec![ #(#choices),* ],
                     }
                 } else {
                     let field = &current_fields[0];
@@ -118,19 +121,28 @@ impl<'s> StructWithNamedFields<'s> {
     /// Generate the implementation of the `to_node` method.
     fn gen_fn_to_node(&self) -> TokenStream2 {
         let ident = &self.gen.ident;
-        let field_names = &self.fields;
+        let fields: Vec<_> = self
+            .gen
+            .fields
+            .iter()
+            .map(|f| {
+                let ident = f.ident.as_ref().unwrap();
+                let name = f.actual_name();
+                quote! {
+                    ibuilder::nodes::FieldKind::Named(#name.into(), self.#ident.to_node())
+                }
+            })
+            .collect();
+        let name = if let Some(name) = &self.gen.metadata.rename {
+            quote! { #name }
+        } else {
+            quote! { stringify!(#ident) }
+        };
         quote! {
             fn to_node(&self) -> ibuilder::nodes::Node {
                 ibuilder::nodes::Node::Composite(
-                    stringify!(#ident).into(),
-                    vec![
-                        #(
-                            ibuilder::nodes::FieldKind::Named(
-                                stringify!(#field_names).into(),
-                                self.#field_names.to_node()
-                            ),
-                        )*
-                    ]
+                    #name.into(),
+                    vec![ #(#fields,)* ]
                 )
             }
         }
