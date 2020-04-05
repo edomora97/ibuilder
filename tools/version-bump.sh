@@ -30,9 +30,9 @@ echo "Waiting a bit for crates.io"
 found=no
 for i in {1..20}; do
   echo "Attempt $i"
-  actual=$(curl --silent -L --fail "https://raw.githubusercontent.com/rust-lang/crates.io-index/master/ib/ui/ibuilder_derive" | tail -n 1 | jq .vers)
+  actual=$(cargo search ibuilder_derive | head -n 1 | cut -d'"' -f 2)
   echo "crates.io reports version ${actual}"
-  if [[ $actual == "\"${version}\"" ]]; then
+  if [[ $actual == "${version}" ]]; then
     found=yes
     break
   fi
