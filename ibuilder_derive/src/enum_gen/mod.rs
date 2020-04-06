@@ -55,6 +55,8 @@ pub struct VariantMetadata {
     rename: Option<String>,
     /// Whether this variant is hidden.
     hidden: bool,
+    /// Whether this is the default variant.
+    default: bool,
 }
 
 /// The information about the type of variant.
@@ -89,6 +91,15 @@ impl EnumGenerator {
                 };
                 if generator.variants.iter().all(|v| v.metadata.hidden) {
                     abort!(ast, "all the variants are hidden");
+                }
+                if generator
+                    .variants
+                    .iter()
+                    .filter(|v| v.metadata.default)
+                    .count()
+                    > 1
+                {
+                    abort!(ast, "at most one variant can be the default");
                 }
                 generator
             }
@@ -268,6 +279,7 @@ impl From<&Variant> for VariantMetadata {
             prompt: None,
             rename: None,
             hidden: false,
+            default: false,
         };
         for attr in &var.attrs {
             if attr.path.is_ident("ibuilder") {
@@ -302,6 +314,11 @@ fn parse_variant_meta(meta: Meta, metadata: &mut VariantMetadata) {
                     emit_warning!(path, "duplicated attribute");
                 }
                 metadata.hidden = true;
+            } else if path.is_ident("default") {
+                if metadata.default {
+                    emit_warning!(path, "duplicated attribute");
+                }
+                metadata.default = true;
             } else {
                 abort!(path, "unknown attribute");
             }
@@ -373,6 +390,13 @@ fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
     } else {
         "Select a variant"
     };
+    let mut default = quote! { None };
+    for var in &gen.variants {
+        if var.metadata.default {
+            let init = var.builder_new(&gen.ident);
+            default = quote! { Some(#init) };
+        }
+    }
     quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
@@ -387,7 +411,7 @@ fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
         impl #builder_ident {
             fn new(config: ibuilder::BuildableValueConfig<()>) -> #builder_ident {
                 #builder_ident {
-                    value: None,
+                    value: #default,
                     prompt: config.prompt.unwrap_or_else(|| #prompt.to_string())
                 }
             }

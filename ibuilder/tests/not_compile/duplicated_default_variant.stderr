@@ -1,0 +1,11 @@
+error: at most one variant can be the default
+  --> $DIR/duplicated_default_variant.rs:4:1
+   |
+4  | / pub enum Enum {
+5  | |     #[ibuilder(default)]
+6  | |     Var1,
+7  | |     #[ibuilder(default)]
+8  | |     Var2,
+9  | |     Var3,
+10 | | }
+   | |_^
