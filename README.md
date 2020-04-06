@@ -52,6 +52,8 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
   `Vec<T>` and `Option<T>`
 - Any field type that implementes the `NewBuildableValue` trait
 
+A list of all the possible options for the `ibuilder` attribute can be found [here](https://docs.rs/ibuilder/*/ibuilder/derive.IBuilder.html).
+
 ### Example of usage
 
 In this example the data is stored inside a struct named `Person` which has 3 fields, one of
