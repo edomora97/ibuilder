@@ -7,6 +7,8 @@ use failure::Error;
 use ibuilder::nodes::*;
 use ibuilder::*;
 
+/// Pass a `Builder` to this function to use an interactive console inspecting the behaviour of the
+/// builder. You may want to add the `--nocapture` option to see the output of this function.
 pub fn interactive_console<T: 'static>(mut builder: Builder<T>) -> Result<T, Error> {
     let stdin = std::io::stdin();
     let mut iterator = stdin.lock().lines();

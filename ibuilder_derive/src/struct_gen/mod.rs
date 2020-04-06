@@ -380,7 +380,7 @@ fn get_field_metadata(field: &Field) -> FieldMetadata {
                 .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
                 .unwrap_or_abort();
             for meta in meta {
-                parse_field_meta(meta, &mut metadata);
+                parse_field_meta(meta, &mut metadata, &field.ty);
             }
         }
     }
@@ -395,12 +395,15 @@ fn get_field_metadata(field: &Field) -> FieldMetadata {
 
 /// Extract the `FieldMetadata` from a `Meta` entry in a field attribute. `meta` comes from
 /// `#[ibuilder(HERE)]`.
-fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata) {
+fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata, ty: &Type) {
     match meta {
         Meta::NameValue(MetaNameValue { path, lit, .. }) => {
             if path.is_ident("default") {
                 if metadata.default.is_none() {
-                    metadata.default = Some(quote! {Some(#lit.into())});
+                    match lit {
+                        syn::Lit::Str(_) => metadata.default = Some(quote! {Some(#lit.into())}),
+                        _ => metadata.default = Some(quote! {Some(#lit as #ty)}),
+                    }
                 } else {
                     abort!(path, "duplicated default");
                 }

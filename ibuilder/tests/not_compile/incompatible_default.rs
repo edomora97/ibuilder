@@ -6,6 +6,12 @@ struct Foo {
     field: i64,
 }
 
+#[derive(IBuilder)]
+struct Bar {
+    #[ibuilder(default = -123)]
+    field: u64,
+}
+
 fn main() {
     Foo::builder();
 }
