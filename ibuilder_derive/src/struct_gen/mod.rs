@@ -401,7 +401,10 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata, ty: &Type) {
             if path.is_ident("default") {
                 if metadata.default.is_none() {
                     match lit {
-                        syn::Lit::Str(_) => metadata.default = Some(quote! {Some(#lit.into())}),
+                        syn::Lit::Str(_) => {
+                            metadata.default =
+                                Some(quote! {Some(std::str::FromStr::from_str(#lit).unwrap())})
+                        }
                         _ => metadata.default = Some(quote! {Some(#lit as #ty)}),
                     }
                 } else {

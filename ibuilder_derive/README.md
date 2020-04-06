@@ -12,9 +12,7 @@ Usage:
 ```rust
 #[derive(IBuilder)]
 struct Example {
-    /// The help message for field1
     field1: i64,
-    /// The help message for field2
     #[ibuilder(default = "something")]
     field2: String,
 }
