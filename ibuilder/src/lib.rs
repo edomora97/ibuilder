@@ -1,4 +1,5 @@
 //! [![Rust](https://github.com/edomora97/ibuilder/workflows/Rust/badge.svg?branch=master)](https://github.com/edomora97/ibuilder/actions?query=workflow%3ARust)
+//! [![Audit](https://github.com/edomora97/ibuilder/workflows/Audit/badge.svg?branch=master)](https://github.com/edomora97/ibuilder/actions?query=workflow%3AAudit)
 //! [![crates.io](https://img.shields.io/crates/v/ibuilder.svg)](https://crates.io/crates/ibuilder)
 //! [![Docs](https://docs.rs/ibuilder/badge.svg)](https://docs.rs/ibuilder)
 //!
