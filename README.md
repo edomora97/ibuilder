@@ -6,41 +6,43 @@
 
 Interactive builders for structs.
 
-This crate provides a way to construct structs interactively, starting from an "empty" state
-and filling the values of the fields of the struct prompting the user with multiple choices
-and text inputs. After each choice the internal state of the builder changes.
+This crate provides a way to construct structs interactively, prompting the user multiple
+choices and text inputs.
 
 The builder provides the user with interactive menu-like interfaces, keeping the UI abstract
 and rust type-safeness.
+
+### Rationale
+When building an interactive application (e.g. a Telegram bot or a console application) it can
+be pretty cumbersome to come out with a decent interface without writing tons of code for the
+logic for handling the parsing and the validation of the input.
+
+This crates provides a useful abstraction that allows an easy connection between the data and
+the user interface. Just by deriving the struct (or enum) that defines your data you can get a
+safe interface for building a UI.
+
+The derive API is inspired by the great [`structopt`](https://docs.rs/structopt) crate.
+
+### API Overview
 
 The API of this crate is very simple:
 - Derive a struct (or an enum) from `IBuilder`, including all the structs/enums that it depends
   upon;
 - Call the `builder()` method (from the `Buildable` trait) to get an instance of `Builder<T>`;
-- By calling `get_options()` on the builder you'll get an object that contains a message to show
-  the user, a list of possible _choices_ (i.e. buttons to press) and eventually the possibility
-  to enter some text (i.e. a text box);
-- By calling `to_node()` on the builder you'll get a tree-like structure with the state of the
-  builder, highlighting the fields that still need actions;
-- You choose how to show to the user the options and when the user made the decision you call
+- Call `get_options()` on the builder to get an object that contains a message to show the user,
+  a list of possible _choices_ (i.e. buttons to press) and eventually the possibility to enter
+  some text (i.e. a text box);
+- Call `to_node()` on the builder to get a tree-like structure with the state of the builder,
+  highlighting the fields that still need actions;
+- You choose how to show to the user the options and when the user made the decision call
   `choose(input)` on the builder. This will apply the choice to the state of the structure if
   it's valid, or return an error;
 - When the state is complete (all the required fields are present) a new option is present in
   the list: _Done_. If the user selects it `choose` will return an instance of `T`.
 
-### Rationale
-When building an interactive application (e.g. a Telegram bot or a console application) which
-needs many configurations it can be pretty cumbersome to come out with a decent interface
-without spending loads of time writing the logic for handling the parsing and the validation of
-the input.
+A list of all the possible options for the `ibuilder` attribute can be found [here](https://docs.rs/ibuilder/*/ibuilder/derive.IBuilder.html).
 
-This crates provides a useful abstraction that allows an easy connection between the data and
-the user interface. Just by deriving the struct (or enum) that defines your data you can get a
-safe interface over a possible UI.
-
-The derive API is inspired by the great [`structopt`](https://docs.rs/structopt) crate.
-
-### Supported features
+### Supported Features
 - Deriving any struct with named fields (or with one unnamed field like `struct Foo(i64)`)
 - Enums (also with variants with field, but only one if unnamed)
 - Default values for the fields and default variant for enums
@@ -52,9 +54,7 @@ The derive API is inspired by the great [`structopt`](https://docs.rs/structopt)
   `Vec<T>` and `Option<T>`
 - Any field type that implementes the `NewBuildableValue` trait
 
-A list of all the possible options for the `ibuilder` attribute can be found [here](https://docs.rs/ibuilder/*/ibuilder/derive.IBuilder.html).
-
-### Example of usage
+### Example of Usage
 
 In this example the data is stored inside a struct named `Person` which has 3 fields, one of
 which has a default value. Deriving from `IBuilder` gives access to the `builder()` method that
