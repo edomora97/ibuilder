@@ -228,6 +228,12 @@ impl<T> Default for BuildableValueConfig<T> {
     }
 }
 
+impl<T: Buildable<T>> Default for Builder<T> {
+    fn default() -> Self {
+        T::builder()
+    }
+}
+
 impl<T: 'static> Builder<T> {
     /// Create a new builder from a `BuildableValue`. Note that the inner type of the
     /// `BuildableValue` must match `T`, otherwise a panic is very likely.
