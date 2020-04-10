@@ -446,6 +446,7 @@ fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
         struct #builder_ident #fields_gen
 
         #[automatically_derived]
+        #[allow(clippy::unnecessary_cast)]
         impl #builder_ident {
             fn new(config: ibuilder::BuildableValueConfig<()>) -> #builder_ident {
                 #builder_ident #fields_new
