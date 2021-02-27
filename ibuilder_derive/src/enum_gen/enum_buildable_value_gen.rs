@@ -1,12 +1,12 @@
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::export::TokenStream2;
 
 use crate::enum_gen::{
     gen_variants_builder_ident, gen_variants_builder_variant_ident, EnumGenerator, VariantKind,
 };
 
 /// Generate the implementation of the `BuildableValue` trait.
-pub fn gen_impl_buildable_value(gen: &EnumGenerator) -> TokenStream2 {
+pub fn gen_impl_buildable_value(gen: &EnumGenerator) -> TokenStream {
     let builder_ident = &gen.builder_ident;
     let fn_apply = gen_fn_apply(gen);
     let fn_get_options = gen_fn_get_options(gen);
@@ -30,7 +30,7 @@ pub fn gen_impl_buildable_value(gen: &EnumGenerator) -> TokenStream2 {
 ///
 /// If the builder is in the variant menu, apply selects the variant to use. If it is already inside
 /// a variant it forward the apply to it.
-fn gen_fn_apply(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_fn_apply(gen: &EnumGenerator) -> TokenStream {
     let select_menu = fn_apply_select_menu(gen);
     let inner_menu = fn_apply_inner_menu(gen);
     quote! {
@@ -47,7 +47,7 @@ fn gen_fn_apply(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the selection of the variant to use.
-fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream2 {
+fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let select_menu: Vec<_> = gen
         .variants
@@ -86,7 +86,7 @@ fn fn_apply_select_menu(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the forwarding of the apply to the variant.
-fn fn_apply_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
+fn fn_apply_inner_menu(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let apply: Vec<_> = gen
         .variants
@@ -119,7 +119,7 @@ fn fn_apply_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
 ///
 /// If the builder is in the main menu, allow the selection of one of the variants. If already
 /// inside a variant forwards the call to it.
-fn gen_fn_get_options(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_fn_get_options(gen: &EnumGenerator) -> TokenStream {
     let select_menu = fn_get_options_select_menu(gen);
     let inner_menu = fn_get_options_inner_menu(gen);
     quote! {
@@ -134,7 +134,7 @@ fn gen_fn_get_options(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the menu of selection of the variant.
-fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
+fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let choices: Vec<_> = gen
         .variants
@@ -174,7 +174,7 @@ fn fn_get_options_select_menu(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the forwarding of the call to get_options to the variant.
-fn fn_get_options_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
+fn fn_get_options_inner_menu(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let variants: Vec<_> = gen
         .variants
@@ -204,7 +204,7 @@ fn fn_get_options_inner_menu(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the implementation of the `get_subfields` method.
-fn gen_fn_get_subfields(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_fn_get_subfields(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let variants: Vec<_> = gen
         .variants
@@ -234,7 +234,7 @@ fn gen_fn_get_subfields(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the implementation of the `to_node` method.
-fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let variants: Vec<_> = gen
         .variants
@@ -277,7 +277,7 @@ fn gen_fn_to_node(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the implementation of the `get_value_any` method.
-fn gen_fn_get_value_any(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_fn_get_value_any(gen: &EnumGenerator) -> TokenStream {
     let builder = gen_variants_builder_ident(&gen.ident);
     let base = &gen.ident;
     let variants: Vec<_> = gen

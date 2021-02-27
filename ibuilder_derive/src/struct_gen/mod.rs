@@ -1,5 +1,5 @@
+use proc_macro2::{Span, TokenStream};
 use proc_macro_error::{abort, emit_warning, ResultExt};
-use syn::export::{Span, TokenStream2};
 use syn::punctuated::Punctuated;
 use syn::{Field, Fields, Ident, Meta, MetaNameValue, Token, Type};
 
@@ -58,7 +58,7 @@ pub struct FieldMetadata {
     /// The default value for this field. Only available if the field type is a builtin type. It is
     /// None if the default value is not specified, otherwise it's
     /// `Some( quote!{ Some(value.into()) })`.
-    pub default: Option<TokenStream2>,
+    pub default: Option<TokenStream>,
     /// The prompt to use for this field.
     pub prompt: Option<String>,
     /// Different name to use in the tree structure.
@@ -142,7 +142,7 @@ impl StructGenerator {
 
     /// Return the actual name of the struct, which is the defined name or the renamed one. The
     /// string literal of the name is returned.
-    fn actual_name(&self) -> TokenStream2 {
+    fn actual_name(&self) -> TokenStream {
         if let Some(renamed) = &self.metadata.rename {
             quote! { #renamed }
         } else {
@@ -215,7 +215,7 @@ fn parse_struct_meta(meta: Meta, metadata: &mut StructMetadata) {
 impl StructField {
     /// The type of the builder for the type of this field. It's either one of the builtin types or
     /// a generic boxed one.
-    fn builder_type(&self) -> TokenStream2 {
+    fn builder_type(&self) -> TokenStream {
         if let Some(builtin) = self.builtin_type() {
             quote! { #builtin }
         } else {
@@ -225,7 +225,7 @@ impl StructField {
 
     /// The initializer of the builder for the current field. It will forward the `FieldMetadata`
     /// to the builder.
-    fn builder_new(&self) -> TokenStream2 {
+    fn builder_new(&self) -> TokenStream {
         let prompt = match &self.metadata.prompt {
             Some(prompt) => quote!(Some(#prompt.to_string())),
             None => quote! {None},
@@ -255,7 +255,7 @@ impl StructField {
 
     /// Check if the type of the field is a builtin type, and in this case it will return the
     /// corresponding builder. It returns `None` if it's not a builtin type.
-    fn builtin_type(&self) -> Option<TokenStream2> {
+    fn builtin_type(&self) -> Option<TokenStream> {
         match &self.ty {
             Type::Path(path) => {
                 let segments = &path.path.segments;
@@ -280,7 +280,7 @@ impl StructField {
 
     /// Return the actual name of the field, which is the defined name or the renamed one. The
     /// string literal of the name is returned.
-    fn actual_name(&self) -> TokenStream2 {
+    fn actual_name(&self) -> TokenStream {
         if let Some(renamed) = &self.metadata.rename {
             quote! { #renamed }
         } else {
@@ -291,7 +291,7 @@ impl StructField {
 }
 
 impl ToTokens for StructGenerator {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.append_all(gen_struct_builder(&self));
         tokens.append_all(gen_impl_new_buildable_value(&self));
         tokens.append_all(gen_impl_buildable_value(&self));
@@ -299,13 +299,13 @@ impl ToTokens for StructGenerator {
 }
 
 impl<'s> ToTokens for FieldDefList<'s> {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         // an empty struct is declared like `struct Foo;`
         if self.fields.is_empty() {
             tokens.append_all(quote! { ; });
             return;
         }
-        let mut inner = TokenStream2::new();
+        let mut inner = TokenStream::new();
         for field in self.fields {
             // named field: prepend the field name
             if let Some(ident) = &field.ident {
@@ -325,7 +325,7 @@ impl<'s> ToTokens for FieldDefList<'s> {
 }
 
 impl<'s> ToTokens for FieldNewList<'s> {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         if self.gen.fields.is_empty() {
             tokens.append_all(quote! {});
             return;
@@ -333,7 +333,7 @@ impl<'s> ToTokens for FieldNewList<'s> {
         let prompt = &self.gen.metadata.prompt.as_deref();
         let prompt = prompt.unwrap_or("Select the field to edit");
         let prompt = quote! { config.prompt.unwrap_or_else(|| #prompt.to_string()) };
-        let mut inner = TokenStream2::new();
+        let mut inner = TokenStream::new();
         for field in &self.gen.fields {
             // named field: prepend the field name
             if let Some(ident) = &field.ident {
@@ -434,7 +434,7 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata, ty: &Type) {
 
 /// Generate the struct that implements `BuildableValue` for the struct, and implement the `new()`
 /// function for it.
-fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
+fn gen_struct_builder(gen: &StructGenerator) -> TokenStream {
     let builder_ident = &gen.builder_ident;
     let fields_gen = gen.fields_def_list();
     let fields_new = gen.fields_new_list();
@@ -456,7 +456,7 @@ fn gen_struct_builder(gen: &StructGenerator) -> TokenStream2 {
 }
 
 /// Generate the implementation of `NewBuildableValue` for the struct.
-fn gen_impl_new_buildable_value(gen: &StructGenerator) -> TokenStream2 {
+fn gen_impl_new_buildable_value(gen: &StructGenerator) -> TokenStream {
     let ident = &gen.ident;
     let builder_ident = &gen.builder_ident;
     quote! {

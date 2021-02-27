@@ -1,5 +1,5 @@
+use proc_macro2::TokenStream;
 use proc_macro_error::abort;
-use syn::export::TokenStream2;
 use syn::Ident;
 
 use quote::quote;
@@ -32,7 +32,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the trait methods.
-    pub fn gen(&self) -> TokenStream2 {
+    pub fn gen(&self) -> TokenStream {
         let fn_apply = self.gen_fn_apply();
         let fn_get_options = self.gen_fn_get_options();
         let fn_get_subfields = self.gen_fn_get_subfields();
@@ -48,7 +48,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the `apply` method.
-    fn gen_fn_apply(&self) -> TokenStream2 {
+    fn gen_fn_apply(&self) -> TokenStream {
         let field_names = &self.fields;
         quote! {
             fn apply(&mut self, data: ibuilder::Input, current_fields: &[String]) -> Result<(), ibuilder::ChooseError> {
@@ -76,7 +76,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the `get_options` method.
-    fn gen_fn_get_options(&self) -> TokenStream2 {
+    fn gen_fn_get_options(&self) -> TokenStream {
         let field_names = &self.fields;
         let choices = self
             .gen
@@ -115,7 +115,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the `get_subfields` method.
-    fn gen_fn_get_subfields(&self) -> TokenStream2 {
+    fn gen_fn_get_subfields(&self) -> TokenStream {
         let field_names = &self.fields;
         quote! {
             fn get_subfields(&self, current_fields: &[String]) -> Vec<String> {
@@ -134,7 +134,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the `to_node` method.
-    fn gen_fn_to_node(&self) -> TokenStream2 {
+    fn gen_fn_to_node(&self) -> TokenStream {
         let ident = &self.gen.ident;
         let fields: Vec<_> = self
             .gen
@@ -165,7 +165,7 @@ impl<'s> StructWithNamedFields<'s> {
     }
 
     /// Generate the implementation of the `get_value_any` method.
-    fn gen_fn_get_value_any(&self) -> TokenStream2 {
+    fn gen_fn_get_value_any(&self) -> TokenStream {
         let ident = &self.gen.ident;
         let field_names = self.gen.field_names();
         quote! {

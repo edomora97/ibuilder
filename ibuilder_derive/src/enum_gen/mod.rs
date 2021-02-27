@@ -1,5 +1,5 @@
+use proc_macro2::TokenStream;
 use proc_macro_error::{abort, emit_warning, ResultExt};
-use syn::export::TokenStream2;
 use syn::punctuated::Punctuated;
 use syn::{Fields, Ident, Meta, MetaNameValue, Token, Variant};
 
@@ -117,7 +117,7 @@ impl EnumVariant {
     /// Generate (or not in case of empty variants) a structure that contains the internal state
     /// of a variant. This struct will have the same fields as the variant, and derives from
     /// `IBuilder`.
-    fn gen_builder(&self, ident: Ident) -> TokenStream2 {
+    fn gen_builder(&self, ident: Ident) -> TokenStream {
         let name = self.actual_name();
         let mut attrs = Vec::new();
         if let Some(prompt) = &self.metadata.prompt {
@@ -125,7 +125,7 @@ impl EnumVariant {
         }
         attrs.push(quote! { rename = #name });
         let fields_def = match &self.kind {
-            VariantKind::Empty => return TokenStream2::new(),
+            VariantKind::Empty => return TokenStream::new(),
             VariantKind::Unnamed(fields) => {
                 let fields: Vec<_> = fields.iter().map(|f| &f.field).collect();
                 if fields.len() != 1 {
@@ -150,7 +150,7 @@ impl EnumVariant {
     }
 
     /// Return the tokens for initializing the builder of this variant.
-    fn builder_new(&self, base: &Ident) -> TokenStream2 {
+    fn builder_new(&self, base: &Ident) -> TokenStream {
         let variant = &self.ident;
         let builder = gen_variants_builder_ident(base);
         let variant_builder = gen_variants_builder_variant_ident(base, variant);
@@ -182,7 +182,7 @@ impl EnumVariant {
 
     /// Return the actual name of the variant, which is the defined name or the renamed one. The
     /// string literal of the name is returned.
-    fn actual_name(&self) -> TokenStream2 {
+    fn actual_name(&self) -> TokenStream {
         if let Some(renamed) = &self.metadata.rename {
             quote! { #renamed }
         } else {
@@ -346,7 +346,7 @@ fn gen_variants_builder_variant_ident(ident: &Ident, variant: &Ident) -> Ident {
 }
 
 impl ToTokens for EnumGenerator {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         tokens.append_all(gen_struct_builder(self));
         tokens.append_all(gen_variants_builder(self));
         // generate the structs for keeping the state of the fields of the variants
@@ -362,7 +362,7 @@ impl ToTokens for EnumGenerator {
 }
 
 impl ToTokens for VariantsDefList<'_> {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         for variant in &self.gen.variants {
             let ident = &variant.ident;
             tokens.append_all(quote! {#ident});
@@ -382,7 +382,7 @@ impl ToTokens for VariantsDefList<'_> {
 
 /// Generate the structure that implements `BuildableValue` for the enum, and implement the `new()`
 /// function for it.
-fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream {
     let builder_ident = &gen.builder_ident;
     let variants_builder_ident = &gen.variants_builder_ident;
     let prompt = if let Some(prompt) = &gen.metadata.prompt {
@@ -420,7 +420,7 @@ fn gen_struct_builder(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the enum that contains the internal state of the `BuildableValue` for the enum.
-fn gen_variants_builder(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_variants_builder(gen: &EnumGenerator) -> TokenStream {
     let variants_builder_ident = &gen.variants_builder_ident;
     let variants = gen.variants_def_list();
     quote! {
@@ -435,7 +435,7 @@ fn gen_variants_builder(gen: &EnumGenerator) -> TokenStream2 {
 }
 
 /// Generate the implementation of `NewBuildableValue` for the enum.
-fn gen_impl_new_buildable_value(gen: &EnumGenerator) -> TokenStream2 {
+fn gen_impl_new_buildable_value(gen: &EnumGenerator) -> TokenStream {
     let ident = &gen.ident;
     let builder_ident = &gen.builder_ident;
     quote! {
