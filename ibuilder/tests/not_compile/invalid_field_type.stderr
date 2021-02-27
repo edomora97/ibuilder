@@ -1,7 +1,8 @@
-error[E0277]: the trait bound `&'static str: ibuilder::NewBuildableValue` is not satisfied
+error[E0277]: the trait bound `&'static str: NewBuildableValue` is not satisfied
  --> $DIR/invalid_field_type.rs:3:10
   |
 3 | #[derive(IBuilder)]
-  |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `&'static str`
+  |          ^^^^^^^^ the trait `NewBuildableValue` is not implemented for `&'static str`
   |
-  = note: required by `ibuilder::NewBuildableValue::new_buildable_value`
+  = note: required by `new_buildable_value`
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

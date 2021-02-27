@@ -1,4 +1,5 @@
 use ibuilder::*;
+use std::path::PathBuf;
 
 #[derive(IBuilder)]
 pub struct Foo {
@@ -16,6 +17,7 @@ pub struct Foo {
     f_f64: f64,
     f_string: String,
     f_char: char,
+    f_pathbuf: PathBuf,
     f_bool: bool,
 }
 

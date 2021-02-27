@@ -1,7 +1,8 @@
-error[E0277]: the trait bound `Bar: ibuilder::NewBuildableValue` is not satisfied
+error[E0277]: the trait bound `Bar: NewBuildableValue` is not satisfied
  --> $DIR/field_not_derived.rs:3:10
   |
 3 | #[derive(IBuilder)]
-  |          ^^^^^^^^ the trait `ibuilder::NewBuildableValue` is not implemented for `Bar`
+  |          ^^^^^^^^ the trait `NewBuildableValue` is not implemented for `Bar`
   |
-  = note: required by `ibuilder::NewBuildableValue::new_buildable_value`
+  = note: required by `new_buildable_value`
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

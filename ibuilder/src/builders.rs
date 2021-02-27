@@ -2,6 +2,7 @@
 
 use std::any::Any;
 use std::marker::PhantomData;
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use crate::nodes::{Field, FieldKind, Node};
@@ -10,7 +11,7 @@ use crate::{
 };
 
 macro_rules! type_builder_boilerplate {
-    () => {
+    (normal) => {
         fn get_subfields(&self, _: &[String]) -> Vec<String> {
             vec![]
         }
@@ -18,6 +19,21 @@ macro_rules! type_builder_boilerplate {
         fn to_node(&self) -> Node {
             if let Some(value) = &self.value {
                 Node::Leaf(Field::String(value.to_string()))
+            } else {
+                Node::Leaf(Field::Missing)
+            }
+        }
+    };
+    (path) => {
+        fn get_subfields(&self, _: &[String]) -> Vec<String> {
+            vec![]
+        }
+
+        fn to_node(&self) -> Node {
+            if let Some(value) = &self.value {
+                Node::Leaf(Field::String(
+                    value.as_os_str().to_string_lossy().to_string(),
+                ))
             } else {
                 Node::Leaf(Field::Missing)
             }
@@ -57,14 +73,24 @@ macro_rules! type_builder {
             $base,
             $name,
             $query,
-            concat!("Builder for the type `", stringify!($base), "`")
+            normal
         );
     };
-    ($base:ty, $name:ident, $query:expr, $docstring:expr) => {
+    ($base:ty, $name:ident, $query:expr, $variant:tt) => {
+        type_builder!(
+            @,
+            $base,
+            $name,
+            $query,
+            concat!("Builder for the type `", stringify!($base), "`"),
+            $variant
+        );
+    };
+    (@, $base:ty, $name:ident, $query:expr, $docstring:expr, $variant:tt) => {
         type_builder_struct!($base, $name, $query, $docstring);
 
         impl BuildableValue for $name {
-            type_builder_boilerplate!();
+            type_builder_boilerplate!($variant);
 
             fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
                 if !current_fields.is_empty() {
@@ -132,11 +158,12 @@ type_builder!(f32, F32Builder, "Type an integer");
 type_builder!(f64, F64Builder, "Type an integer");
 type_builder!(String, StringBuilder, "Type a string");
 type_builder!(char, CharBuilder, "Type a char");
+type_builder!(PathBuf, PathBufBuilder, "Type a path", path);
 
 type_builder_struct!(bool, BoolBuilder, "True or false?");
 
 impl BuildableValue for BoolBuilder {
-    type_builder_boilerplate!();
+    type_builder_boilerplate!(normal);
 
     fn apply(&mut self, data: Input, current_fields: &[String]) -> Result<(), ChooseError> {
         if !current_fields.is_empty() {
