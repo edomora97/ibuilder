@@ -232,10 +232,7 @@ fn parse_enum_meta(meta: Meta, metadata: &mut EnumMetadata) {
 impl VariantKind {
     /// Check if this is `VariantKind::Empty`.
     fn is_empty(&self) -> bool {
-        match self {
-            VariantKind::Empty => true,
-            _ => false,
-        }
+        matches!(self, VariantKind::Empty)
     }
 }
 

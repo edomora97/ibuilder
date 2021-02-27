@@ -103,10 +103,7 @@ impl StructGenerator {
     pub fn from_struct(ast: &syn::DeriveInput) -> StructGenerator {
         match &ast.data {
             syn::Data::Struct(data) => {
-                let named_fields = match data.fields {
-                    Fields::Named(_) => true,
-                    _ => false,
-                };
+                let named_fields = matches!(data.fields, Fields::Named(_));
                 let metadata = StructMetadata::from(ast);
                 StructGenerator {
                     ident: ast.ident.clone(),

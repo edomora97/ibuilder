@@ -317,7 +317,7 @@ impl<T: 'static> Builder<T> {
     pub fn finalize(&self) -> Result<T, FinalizeError> {
         self.builder
             .get_value_any()
-            .ok_or_else(|| FinalizeError::MissingField)
+            .ok_or(FinalizeError::MissingField)
             .map(|r| *r.downcast::<T>().unwrap())
     }
 
