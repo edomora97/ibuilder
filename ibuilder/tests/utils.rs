@@ -30,8 +30,8 @@ pub fn interactive_console<T: 'static>(mut builder: Builder<T>) -> Result<T, Err
             println!("- textual input (> followed by the content)");
         }
         let line = iterator.next().unwrap()?;
-        let input = if line.starts_with('>') {
-            Input::Text(line[1..].to_string())
+        let input = if let Some(stripped) = line.strip_prefix('>') {
+            Input::Text(stripped.to_string())
         } else {
             Input::Choice(line)
         };
