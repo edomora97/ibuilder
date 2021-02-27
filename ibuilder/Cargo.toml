@@ -1,6 +1,6 @@
 [package]
 name = "ibuilder"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Edoardo Morassutto <edoardo.morassutto@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -17,9 +17,9 @@ derive = ["ibuilder_derive"]
 
 [dependencies]
 failure = "0.1"
-ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.6", optional = true }
+ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.7", optional = true }
 
 [dev-dependencies]
 trybuild = "1.0"
-ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.6" }
+ibuilder_derive = { path = "../ibuilder_derive", version = "0.1.7" }
 rand = "0.7"
