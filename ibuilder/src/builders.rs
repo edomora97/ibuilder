@@ -43,7 +43,12 @@ macro_rules! type_builder_boilerplate {
 
 macro_rules! type_builder_struct {
     ($base:ty, $name:ident, $query:expr) => {
-        type_builder_struct!($base, $name, $query, concat!("Builder for the type `", stringify!($base), "`"));
+        type_builder_struct!(
+            $base,
+            $name,
+            $query,
+            concat!("Builder for the type `", stringify!($base), "`")
+        );
     };
     ($base:ty, $name:ident, $query:expr, $docstring:expr) => {
         #[doc = $docstring]
@@ -64,7 +69,7 @@ macro_rules! type_builder_struct {
                 }
             }
         }
-    }
+    };
 }
 
 macro_rules! type_builder {
