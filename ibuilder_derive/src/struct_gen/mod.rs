@@ -55,9 +55,7 @@ pub struct StructField {
 /// The metadata of the field, it's taken from the attributes of the `Field`.
 #[derive(Debug)]
 pub struct FieldMetadata {
-    /// The default value for this field. Only available if the field type is a builtin type. It is
-    /// None if the default value is not specified, otherwise it's
-    /// `Some( quote!{ Some(value.into()) })`.
+    /// The default value for this field.
     pub default: Option<TokenStream>,
     /// The prompt to use for this field.
     pub prompt: Option<String>,
@@ -88,6 +86,13 @@ struct FieldDefList<'s> {
 /// Where the `Type::new` will be chosen according to the type of the field in the original struct
 /// and eventually will forward the `FieldMetadata`.
 struct FieldNewList<'s> {
+    /// A reference to the original generator for the struct.
+    gen: &'s StructGenerator,
+}
+
+/// Generator for the `impl std::fmt::Debug for ...` implementation block. This will generate a
+/// Debug implementation for all the fields, but the hidden ones.
+struct ImplDebug<'s> {
     /// A reference to the original generator for the struct.
     gen: &'s StructGenerator,
 }
@@ -153,11 +158,6 @@ impl StructGenerator {
         self.named_fields
     }
 
-    /// The list of the `Ident` of the named fields in the original struct.
-    fn field_names(&self) -> Vec<Ident> {
-        self.fields.iter().filter_map(|f| f.ident.clone()).collect()
-    }
-
     /// Make a new `FieldDefList` relative to this struct.
     fn fields_def_list(&self) -> FieldDefList {
         FieldDefList {
@@ -169,6 +169,14 @@ impl StructGenerator {
     /// Make a new `FieldNewList` relative to this struct.
     fn fields_new_list(&self) -> FieldNewList {
         FieldNewList { gen: &self }
+    }
+
+    /// Make a new `ImplDebug` for to this struct.
+    ///
+    /// This implements the `Debug` trait without requiring any field to be `Debug`. The basic field
+    /// must be `Debug`, but the hidden ones don't have to.
+    fn impl_debug(&self) -> ImplDebug {
+        ImplDebug { gen: &self }
     }
 }
 
@@ -210,10 +218,13 @@ fn parse_struct_meta(meta: Meta, metadata: &mut StructMetadata) {
 }
 
 impl StructField {
-    /// The type of the builder for the type of this field. It's either one of the builtin types or
-    /// a generic boxed one.
+    /// The type of the builder for the type of this field. It's either one of the builtin types, a
+    /// generic boxed one, or the actual type if the field is hidden.
     fn builder_type(&self) -> TokenStream {
-        if let Some(builtin) = self.builtin_type() {
+        if self.metadata.hidden {
+            let ty = &self.ty;
+            quote! { #ty }
+        } else if let Some(builtin) = self.builtin_type() {
             quote! { #builtin }
         } else {
             quote! { Box<dyn ibuilder::BuildableValue> }
@@ -227,12 +238,19 @@ impl StructField {
             Some(prompt) => quote!(Some(#prompt.to_string())),
             None => quote! {None},
         };
+        if self.metadata.hidden {
+            return if let Some(default) = &self.metadata.default {
+                quote! { #default }
+            } else {
+                quote! { ::std::default::Default::default() }
+            };
+        }
         if let Some(builtin) = self.builtin_type() {
-            let default = self
-                .metadata
-                .default
-                .clone()
-                .unwrap_or_else(|| quote! {None});
+            let default = if let Some(default) = self.metadata.default.clone() {
+                quote! { Some(#default) }
+            } else {
+                quote! { None }
+            };
             quote! {
                 <#builtin>::new(ibuilder::BuildableValueConfig {
                     default: #default,
@@ -348,6 +366,39 @@ impl<'s> ToTokens for FieldNewList<'s> {
     }
 }
 
+impl<'s> ToTokens for ImplDebug<'s> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let builder_ident = &self.gen.builder_ident;
+        let mut fields = TokenStream::new();
+        for (i, field) in self.gen.fields.iter().enumerate() {
+            if let Some(ident) = &field.ident {
+                if field.metadata.hidden {
+                    fields.append_all(quote! { .field(stringify!(#ident), &"[hidden]") });
+                } else {
+                    fields.append_all(quote! { .field(stringify!(#ident), &self.#ident) });
+                }
+            } else {
+                if field.metadata.hidden {
+                    fields.append_all(quote! { .field(stringify!(#i), &"[hidden]") });
+                } else {
+                    let index = syn::Index::from(i);
+                    fields.append_all(quote! { .field(stringify!(#i), &self.#index) });
+                }
+            }
+        }
+        tokens.append_all(quote! {
+            #[automatically_derived]
+            impl std::fmt::Debug for #builder_ident {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    f.debug_struct(stringify!(#builder_ident))
+                        #fields
+                        .finish()
+                }
+            }
+        })
+    }
+}
+
 impl From<&Field> for StructField {
     fn from(field: &Field) -> StructField {
         let res = StructField {
@@ -384,9 +435,6 @@ fn get_field_metadata(field: &Field) -> FieldMetadata {
     if metadata.hidden && field.ident.is_none() {
         abort!(field, "unnamed fields cannot be hidden");
     }
-    if metadata.hidden && metadata.default.is_none() {
-        abort!(field, "a default value is required for hidden fields");
-    }
     metadata
 }
 
@@ -400,9 +448,9 @@ fn parse_field_meta(meta: Meta, metadata: &mut FieldMetadata, ty: &Type) {
                     match lit {
                         syn::Lit::Str(_) => {
                             metadata.default =
-                                Some(quote! {Some(std::str::FromStr::from_str(#lit).unwrap())})
+                                Some(quote! { <#ty as std::str::FromStr>::from_str(#lit).unwrap() })
                         }
-                        _ => metadata.default = Some(quote! {Some(#lit as #ty)}),
+                        _ => metadata.default = Some(quote! { #lit }),
                     }
                 } else {
                     abort!(path, "duplicated default");
@@ -435,12 +483,14 @@ fn gen_struct_builder(gen: &StructGenerator) -> TokenStream {
     let builder_ident = &gen.builder_ident;
     let fields_gen = gen.fields_def_list();
     let fields_new = gen.fields_new_list();
+    let impl_debug = gen.impl_debug();
     quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         #[doc(hidden)]
-        #[derive(Debug)]
         struct #builder_ident #fields_gen
+
+        #impl_debug
 
         #[automatically_derived]
         #[allow(clippy::unnecessary_cast)]

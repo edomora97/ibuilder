@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use proc_macro_error::abort;
 use syn::Ident;
 
-use quote::quote;
+use quote::{quote, TokenStreamExt};
 
 use crate::struct_gen::StructGenerator;
 
@@ -167,13 +167,19 @@ impl<'s> StructWithNamedFields<'s> {
     /// Generate the implementation of the `get_value_any` method.
     fn gen_fn_get_value_any(&self) -> TokenStream {
         let ident = &self.gen.ident;
-        let field_names = self.gen.field_names();
+        let mut field_list = TokenStream::new();
+        for field in self.gen.fields.iter() {
+            let field_name = field.ident.as_ref().unwrap();
+            field_list.append_all(if field.metadata.hidden {
+                quote! { #field_name: self.#field_name.clone(), }
+            } else {
+                quote! { #field_name: *self.#field_name.get_value_any()?.downcast().unwrap(), }
+            });
+        }
         quote! {
             fn get_value_any(&self) -> Option<Box<dyn std::any::Any>> {
                 Some(Box::new(#ident {
-                    #(
-                        #field_names: *self.#field_names.get_value_any()?.downcast().unwrap(),
-                    )*
+                    #field_list
                 }))
             }
         }

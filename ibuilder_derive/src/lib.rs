@@ -138,7 +138,8 @@ mod struct_gen;
 ///
 /// ## `#[ibuilder(hidden)]`
 /// Hide a field or a variant from the return value of `get_options()` and `to_node()`. The field
-/// cannot be accessed neither using `apply`. If a field is hidden it must have a default value.
+/// cannot be accessed neither using `apply`. If a field is hidden it must have a default value or
+/// it must implement `Default`.
 ///
 /// When hiding the fields of an enum, at least one of them must be visible.
 ///
@@ -148,6 +149,8 @@ mod struct_gen;
 /// struct Struct {
 ///     #[ibuilder(hidden, default = 42)]
 ///     field1: u8,
+///     #[ibuilder(hidden)] // uses Default::default()
+///     field2: u8,
 /// }
 /// #[derive(IBuilder)]
 /// enum Enum {

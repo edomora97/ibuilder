@@ -10,6 +10,26 @@ struct Struct {
     enm: Enum,
 }
 
+#[derive(Clone, Eq, PartialEq, Debug)]
+struct Defaultable {
+    field: String,
+}
+
+impl Default for Defaultable {
+    fn default() -> Self {
+        Defaultable {
+            field: "success".into(),
+        }
+    }
+}
+
+#[derive(IBuilder, Eq, PartialEq, Debug)]
+struct StructWithoutDefault {
+    #[ibuilder(hidden)]
+    field: Defaultable,
+    field2: i32,
+}
+
 #[derive(IBuilder, Eq, PartialEq, Debug)]
 enum Enum {
     #[ibuilder(hidden)]
@@ -60,4 +80,38 @@ fn hidden_field() {
             }
         }
     }
+}
+
+#[test]
+fn hidden_field_without_default() {
+    let mut builder = StructWithoutDefault::builder();
+
+    let options = builder.get_options();
+    let choices: Vec<_> = options.choices.iter().map(|c| c.text.as_str()).collect();
+    assert!(!choices.contains(&"field"));
+
+    assert_eq!(
+        builder.choose(Input::choice("field")),
+        Err(ChooseError::UnexpectedChoice)
+    );
+
+    let node = builder.to_node();
+    match node {
+        Node::Leaf(_) => panic!("expecting a composite"),
+        Node::Composite(_, fields) => {
+            assert_eq!(fields.len(), 1);
+            match &fields[0] {
+                FieldKind::Named(name, _) => {
+                    assert_ne!(name, "field");
+                }
+                FieldKind::Unnamed(_) => panic!("expecting named"),
+            }
+        }
+    }
+
+    builder.choose(Input::choice("field2")).unwrap();
+    builder.choose(Input::text("42")).unwrap();
+
+    let res = builder.finalize().unwrap();
+    assert_eq!(res.field.field, "success");
 }
