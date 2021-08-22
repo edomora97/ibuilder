@@ -247,9 +247,9 @@ impl<T: 'static> Builder<T> {
 
     /// Return all the valid options that this builder accepts in the current state.
     pub fn get_options(&self) -> Options {
+        let mut options = self.builder.get_options(&self.current_fields);
         // main menu
         if self.current_fields.is_empty() {
-            let mut options = self.builder.get_options(&self.current_fields);
             if self.is_done() {
                 options.choices.push(Choice {
                     choice_id: FINALIZE_ID.to_string(),
@@ -257,17 +257,15 @@ impl<T: 'static> Builder<T> {
                     needs_action: false,
                 });
             }
-            options
         // field menu
         } else {
-            let mut options = self.builder.get_options(&self.current_fields);
             options.choices.push(Choice {
                 choice_id: BACK_ID.to_string(),
                 text: "Go back".to_string(),
                 needs_action: false,
             });
-            options
         }
+        options
     }
 
     /// Apply an input to the builder, making it change state. Call again `get_options()` for the

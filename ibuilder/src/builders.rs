@@ -214,7 +214,7 @@ impl BuildableValue for BoolBuilder {
     }
 
     fn get_value_any(&self) -> Option<Box<dyn Any>> {
-        self.value.clone().map(|x| Box::new(x) as Box<dyn Any>)
+        self.value.map(|x| Box::new(x) as Box<dyn Any>)
     }
 }
 
@@ -344,12 +344,11 @@ where
     fn get_options(&self, current_fields: &[String]) -> Options {
         // vec main manu
         if current_fields.is_empty() {
-            let mut choices = Vec::new();
-            choices.push(Choice {
+            let mut choices = vec![Choice {
                 choice_id: "__new".to_string(),
                 text: "New element".to_string(),
                 needs_action: false,
-            });
+            }];
             if !self.items.is_empty() {
                 choices.push(Choice {
                     choice_id: "__remove".to_string(),

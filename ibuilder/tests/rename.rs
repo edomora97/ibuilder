@@ -88,8 +88,8 @@ fn test_enum_named() {
     builder.choose(Input::choice("Var2")).unwrap();
 
     let options = builder.get_options();
-    let choices: Vec<_> = options.choices.iter().map(|c| c.text.as_str()).collect();
-    assert!(choices.contains(&"Edit renamed inner field"));
+    let mut choices = options.choices.iter().map(|c| c.text.as_str());
+    assert!(choices.any(|x| x == "Edit renamed inner field"));
 
     let nodes = builder.to_node();
     match nodes {

@@ -45,8 +45,8 @@ fn hidden_variant() {
     let mut builder = Enum::builder();
 
     let options = builder.get_options();
-    let choices: Vec<_> = options.choices.iter().map(|c| c.text.as_str()).collect();
-    assert!(!choices.contains(&"Var1"));
+    let mut choices = options.choices.iter().map(|c| c.text.as_str());
+    assert!(!choices.any(|x| x == "Var1"));
 
     assert_eq!(
         builder.choose(Input::choice("Var1")),
@@ -59,8 +59,8 @@ fn hidden_field() {
     let mut builder = Struct::builder();
 
     let options = builder.get_options();
-    let choices: Vec<_> = options.choices.iter().map(|c| c.text.as_str()).collect();
-    assert!(!choices.contains(&"field"));
+    let mut choices = options.choices.iter().map(|c| c.text.as_str());
+    assert!(!choices.any(|x| x == "field"));
 
     assert_eq!(
         builder.choose(Input::choice("field")),
@@ -87,8 +87,8 @@ fn hidden_field_without_default() {
     let mut builder = StructWithoutDefault::builder();
 
     let options = builder.get_options();
-    let choices: Vec<_> = options.choices.iter().map(|c| c.text.as_str()).collect();
-    assert!(!choices.contains(&"field"));
+    let mut choices = options.choices.iter().map(|c| c.text.as_str());
+    assert!(!choices.any(|x| x == "field"));
 
     assert_eq!(
         builder.choose(Input::choice("field")),

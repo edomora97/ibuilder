@@ -168,7 +168,7 @@ impl StructGenerator {
 
     /// Make a new `FieldNewList` relative to this struct.
     fn fields_new_list(&self) -> FieldNewList {
-        FieldNewList { gen: &self }
+        FieldNewList { gen: self }
     }
 
     /// Make a new `ImplDebug` for to this struct.
@@ -176,7 +176,7 @@ impl StructGenerator {
     /// This implements the `Debug` trait without requiring any field to be `Debug`. The basic field
     /// must be `Debug`, but the hidden ones don't have to.
     fn impl_debug(&self) -> ImplDebug {
-        ImplDebug { gen: &self }
+        ImplDebug { gen: self }
     }
 }
 
@@ -307,9 +307,9 @@ impl StructField {
 
 impl ToTokens for StructGenerator {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        tokens.append_all(gen_struct_builder(&self));
-        tokens.append_all(gen_impl_new_buildable_value(&self));
-        tokens.append_all(gen_impl_buildable_value(&self));
+        tokens.append_all(gen_struct_builder(self));
+        tokens.append_all(gen_impl_new_buildable_value(self));
+        tokens.append_all(gen_impl_buildable_value(self));
     }
 }
 
@@ -367,6 +367,7 @@ impl<'s> ToTokens for FieldNewList<'s> {
 }
 
 impl<'s> ToTokens for ImplDebug<'s> {
+    #[allow(clippy::collapsible_else_if)]
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let builder_ident = &self.gen.builder_ident;
         let mut fields = TokenStream::new();
@@ -405,7 +406,7 @@ impl From<&Field> for StructField {
             ident: field.ident.clone(),
             ty: field.ty.clone(),
             field: field.clone(),
-            metadata: get_field_metadata(&field),
+            metadata: get_field_metadata(field),
         };
         if res.metadata.default.is_some() && res.builtin_type().is_none() {
             abort!(field, "default value is supported only on plain types");
