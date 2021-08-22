@@ -5,4 +5,4 @@ error[E0277]: the trait bound `Bar: NewBuildableValue` is not satisfied
   |          ^^^^^^^^ the trait `NewBuildableValue` is not implemented for `Bar`
   |
   = note: required by `new_buildable_value`
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the derive macro `IBuilder` (in Nightly builds, run with -Z macro-backtrace for more info)

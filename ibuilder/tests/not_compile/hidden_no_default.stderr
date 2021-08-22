@@ -1,6 +1,6 @@
 error: a default value is required for hidden fields
- --> $DIR/hidden_no_default.rs:5:5
-  |
-5 | /     #[ibuilder(hidden)]
-6 | |     field: i64,
-  | |______________^
+  --> $DIR/hidden_no_default.rs:10:5
+   |
+10 | /     #[ibuilder(hidden)]
+11 | |     field: NonDefault,
+   | |_____________________^

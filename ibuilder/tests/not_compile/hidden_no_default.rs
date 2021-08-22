@@ -1,9 +1,14 @@
 use ibuilder::*;
 
 #[derive(IBuilder)]
+struct NonDefault {
+    field: String,
+}
+
+#[derive(IBuilder)]
 struct Foo {
     #[ibuilder(hidden)]
-    field: i64,
+    field: NonDefault,
 }
 
 fn main() {
